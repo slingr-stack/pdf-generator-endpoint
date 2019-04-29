@@ -1,0 +1,94 @@
+{
+    "label": "PDF Generator",
+    "name": "pdf-generator",
+    "apiVersion": "v1",
+    "internal": false,
+    "configurationType": "GLOBAL",
+    "deployment": {
+        "profiles":[
+            {
+                "name": "default",
+                "label": "Default",
+                "memory": 384,
+                "offHeapMinFactor": 1.5,
+                "description": "Default configuration"
+            },
+            {
+                "name": "bigFiles",
+                "label": "Big files",
+                "memory": 512,
+                "offHeapMinFactor": 2,
+                "description": "Can process files up to 50MB"
+            },
+            {
+                "name": "hugeFiles",
+                "label": "Huge files",
+                "memory": 1024,
+                "offHeapMinFactor": 5,
+                "description": "Can process files up to 200MB"
+            }
+        ],
+        "allowMultipleInstances": true
+    },
+    "icon48": "https://storage.googleapis.com/static.slingrs.io/platform/endpoints/pdf-generator.png",
+    "configurationHelpUrl": "/endpoints_pdfgenerator.html",
+    "status": "ACTIVE",
+    "stores": [],
+    "events": [
+        {
+            "label": "PDF Response",
+            "name": "pdfResponse"
+        }
+    ],
+    "functions": [
+        {
+            "label": "Generate PDF",
+            "name": "_generatePdf",
+            "callbacks": [
+                {
+                    "name": "pdfResponse",
+                    "maxWaitingTime": 120000,
+                    "maxExpectedResponses": 1
+                }
+            ]
+        },
+        {
+            "label": "Merge PDF documents",
+            "name": "_mergeDocuments",
+            "callbacks": [
+                {
+                    "name": "pdfResponse",
+                    "maxWaitingTime": 120000,
+                    "maxExpectedResponses": 1
+                }
+            ]
+        },
+        {
+            "label": "Split PDF document",
+            "name": "_splitDocument",
+            "callbacks": [
+                {
+                    "name": "pdfResponse",
+                    "maxWaitingTime": 120000,
+                    "maxExpectedResponses": 1
+                }
+            ]
+        },
+        {
+            "label": "Replace header and footer in pdf files",
+            "name": "_replaceHeaderAndFooter",
+            "callbacks": [
+                {
+                    "name": "pdfResponse",
+                    "maxWaitingTime": 120000,
+                    "maxExpectedResponses": 1
+                }
+            ]
+        }
+    ],
+    "scripts":[
+        "functions.js"
+    ],
+    "listeners":[],
+    "configuration":[]
+}
