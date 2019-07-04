@@ -73,17 +73,14 @@ public class PdfGenerator extends Endpoint {
 
     @EndpointFunction(name = "_generatePdf")
     public Json generatePdf(FunctionRequest request) {
-
-        Json data = request.getJsonParams();
-
-        Json resp = Json.map();
         logger.info("Creating pdf from template");
 
+        Json data = request.getJsonParams();
+        Json resp = Json.map();
         String template = data.string("template");
         if (StringUtils.isBlank(template)) {
             throw EndpointException.permanent(ErrorCode.ARGUMENT, "Template can not be empty.");
         }
-
         Json jData = data.json("data");
         if (jData == null) {
             jData = Json.map();
@@ -92,38 +89,30 @@ public class PdfGenerator extends Endpoint {
         Configuration cfg = new Configuration();
         Template tpl;
         StringWriter sw = null;
-
         try {
 
             tpl = new Template("name", new StringReader(template), cfg);
             tpl.setAutoFlush(true);
-
             sw = new StringWriter();
-
             tpl.process(jData.toMap(), sw);
-
             data.set("tpl", sw.toString());
             QueuePdf.getStreamInstance().add(request);
-
             resp.set("status", "ok");
-
         } catch (IOException e) {
+            logger.error("Can not generate PDF, I/O exception", e);
             throw EndpointException.permanent(ErrorCode.GENERAL, "Failed to create file", e);
         } catch (TemplateException e) {
+            logger.error("Can not generate PDF, template exception", e);
             throw EndpointException.permanent(ErrorCode.GENERAL, "Failed to parse template", e);
         } finally {
-
             try {
-
                 if (sw != null) {
                     sw.flush();
                     sw.close();
                 }
-
             } catch (IOException ioe) {
                 logger.info("String writer can not be closed.");
             }
-
         }
 
         return resp;
@@ -361,38 +350,32 @@ public class PdfGenerator extends Endpoint {
     }
 
     private void createPdf(FunctionRequest req) {
-
+        logger.info("Creating pdf file");
         Json res = Json.map();
         InputStream is = null;
-
         try {
-
             Json data = req.getJsonParams();
-
             String template = data.string("tpl");
             Json settings = data.json("settings");
-
             PdfEngine pdfEngine = new PdfEngine(template, settings);
             is = pdfEngine.getPDF();
-
             if (is != null) {
+                logger.info("Uploading file to endpoint services");
                 Json fileJson = files().upload(pdfEngine.getFileName(), is, "application/pdf");
+                logger.info("Done uploading file to endpoint services");
                 pdfEngine.cleanTmpFiles();
                 res.set("status", "ok");
                 res.set("file", fileJson);
             } else {
+                logger.warn("PDF file can not be generated");
                 res.set("status", "error");
                 res.set("message", EndpointException.json(ErrorCode.GENERAL, "PDF file was not generated."));
             }
-
-
         } catch (Exception ex) {
-
+            logger.info("Failed to generate PDF", ex);
             res.set("status", "error");
             res.set("message", EndpointException.json(ErrorCode.GENERAL, "Failed to generate PDF: " + ex.getMessage(), ex));
-
         } finally {
-
             if (is != null) {
                 try {
                     is.close();
@@ -401,24 +384,20 @@ public class PdfGenerator extends Endpoint {
                 }
 
             }
-
         }
-
+        logger.info("Pdf has been successfully created. Sending [pdfResponse] event to the app");
         events().send("pdfResponse", res, req.getFunctionId());
-
+        logger.info("Done sending [pdfResponse] event to the app");
     }
 
     private final ReentrantLock pdfLock = new ReentrantLock();
 
     private void generateAutoPdf() {
         pdfLock.lock();
-
         try {
-
             while (QueuePdf.getStreamInstance().getTotalSize() > 0) {
                 createPdf(QueuePdf.getStreamInstance().poll());
             }
-
         } finally {
             pdfLock.unlock();
         }
