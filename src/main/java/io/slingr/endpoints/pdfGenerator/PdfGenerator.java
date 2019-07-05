@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -39,17 +40,12 @@ public class PdfGenerator extends Endpoint {
 
 
     public void endpointStarted() {
-
         if (!properties().isLocalDeployment()) {
             try {
-
                 PdfFilesUtils pdfFilesUtils = new PdfFilesUtils();
-
                 pdfFilesUtils.executeCommands();
-
                 pdfFilesUtils.exportResource("wkhtmltopdf");
                 pdfFilesUtils.exportResource("wkhtmltoimage");
-
             } catch (Exception ex) {
                 logger.error(ex.getMessage(), ex);
             }
@@ -58,9 +54,7 @@ public class PdfGenerator extends Endpoint {
 
         Executors.newSingleThreadScheduledExecutor().execute(() -> {
             while (true) {
-
                 generateAutoPdf();
-
                 try {
                     Thread.sleep(3000);
                 } catch (InterruptedException e) {
@@ -90,7 +84,6 @@ public class PdfGenerator extends Endpoint {
         Template tpl;
         StringWriter sw = null;
         try {
-
             tpl = new Template("name", new StringReader(template), cfg);
             tpl.setAutoFlush(true);
             sw = new StringWriter();
@@ -350,6 +343,10 @@ public class PdfGenerator extends Endpoint {
     }
 
     private void createPdf(FunctionRequest req) {
+        createPdf(req, true);
+    }
+
+    private void createPdf(FunctionRequest req, boolean retry) {
         logger.info("Creating pdf file");
         Json res = Json.map();
         InputStream is = null;
@@ -360,12 +357,26 @@ public class PdfGenerator extends Endpoint {
             PdfEngine pdfEngine = new PdfEngine(template, settings);
             is = pdfEngine.getPDF();
             if (is != null) {
-                logger.info("Uploading file to endpoint services");
-                Json fileJson = files().upload(pdfEngine.getFileName(), is, "application/pdf");
-                logger.info("Done uploading file to endpoint services");
-                pdfEngine.cleanTmpFiles();
-                res.set("status", "ok");
-                res.set("file", fileJson);
+                try {
+                    logger.info("Uploading file to endpoint services");
+                    Json fileJson = files().upload(pdfEngine.getFileName(), is, "application/pdf");
+                    logger.info("Done uploading file to endpoint services");
+                    res.set("status", "ok");
+                    res.set("file", fileJson);
+                } catch (Exception e) {
+                    logger.error("Problems uploading file to endpoint services", e);
+                    if (retry) {
+                        logger.info("Retrying uploading");
+                        createPdf(req, false);
+                    }
+                } finally {
+                    pdfEngine.cleanTmpFiles();
+                    try {
+                        is.close();
+                    } catch (IOException io) {
+                        logger.info("Can not close stream", io);
+                    }
+                }
             } else {
                 logger.warn("PDF file can not be generated");
                 res.set("status", "error");
@@ -375,15 +386,6 @@ public class PdfGenerator extends Endpoint {
             logger.info("Failed to generate PDF", ex);
             res.set("status", "error");
             res.set("message", EndpointException.json(ErrorCode.GENERAL, "Failed to generate PDF: " + ex.getMessage(), ex));
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException io) {
-                    logger.info("Close was failed");
-                }
-
-            }
         }
         logger.info("Pdf has been successfully created. Sending [pdfResponse] event to the app");
         events().send("pdfResponse", res, req.getFunctionId());

@@ -216,7 +216,7 @@ public class PdfHeaderFooterHandler {
         commandParams.add(sourceTmpFile);
         commandParams.add(targetTmpFile);
 
-        InputStream is = makeFile(commandParams, targetTmpFile);
+        InputStream is = openStream(commandParams, targetTmpFile);
 
         try {
             java.lang.Thread.sleep(1000);
@@ -227,29 +227,24 @@ public class PdfHeaderFooterHandler {
 
     }
 
-
-    public static InputStream makeFile(List<String> commandParams, String targetTmpFile) {
-
+    public static InputStream openStream(List<String> commandParams, String targetTmpFile) {
         ProcessBuilder pb;
         Process process = null;
         try {
-
             pb = new ProcessBuilder(commandParams);
             pb.inheritIO();
             process = pb.start();
             process.waitFor();
-
             return FileUtils.openInputStream(new File(targetTmpFile));
-
         } catch (InterruptedException | IOException e) {
-            logger.info("HTML can not be converted. " + e.getMessage());
-
+            logger.info("HTML can not be converted", e);
+        } catch (Exception ex) {
+            logger.info(String.format("Can not open stream for file [%s]", targetTmpFile), ex);
         } finally {
             if (process != null) {
                 process.destroy();
             }
         }
-
         return null;
     }
 

@@ -12,7 +12,6 @@ public class QueuePdf {
     private static QueuePdf queueInstance = null;
 
     public static QueuePdf getStreamInstance() {
-
         if (queueInstance == null) {
             queueInstance = new QueuePdf();
         }

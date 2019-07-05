@@ -120,44 +120,33 @@ public class PdfEngine {
     }
 
     public InputStream getPDF() {
-
         try {
-
             File temp = File.createTempFile("pdf-wkhtmltopdf-" + Strings.randomUUIDString(), ".html");
             FileUtils.writeStringToFile(temp, template, "UTF-8");
-
             sourceTmpFile = temp.getAbsolutePath();
-            targetTmpFile = temp.getAbsolutePath().replaceAll(".html", ".pdf");
-
+            targetTmpFile = temp.getAbsolutePath().replaceAll("\\.html", ".pdf");
             commandParams.add(sourceTmpFile);
             commandParams.add(targetTmpFile);
-
         } catch (IOException e) {
             logger.info("Error to create temporal files. " + e.getMessage());
             return null;
         }
-
-        return PdfHeaderFooterHandler.makeFile(commandParams, targetTmpFile);
+        return PdfHeaderFooterHandler.openStream(commandParams, targetTmpFile);
     }
 
     public void cleanTmpFiles() {
-
         if (sourceTmpFile != null) {
             (new File(sourceTmpFile)).delete();
         }
-
         if (targetTmpFile != null) {
             (new File(targetTmpFile)).delete();
         }
-
         if (headerTmpFile != null) {
             (new File(headerTmpFile)).delete();
         }
-
         if (footerTmpFile != null) {
             (new File(footerTmpFile)).delete();
         }
-
     }
 
 }
