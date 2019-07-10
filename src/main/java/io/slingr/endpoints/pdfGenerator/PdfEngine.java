@@ -135,7 +135,7 @@ public class PdfEngine {
     }
 
     public void cleanTmpFiles() {
-        if (sourceTmpFile != null) {
+        /*if (sourceTmpFile != null) {
             (new File(sourceTmpFile)).delete();
         }
         if (targetTmpFile != null) {
@@ -146,7 +146,7 @@ public class PdfEngine {
         }
         if (footerTmpFile != null) {
             (new File(footerTmpFile)).delete();
-        }
+        }*/
     }
 
 }
