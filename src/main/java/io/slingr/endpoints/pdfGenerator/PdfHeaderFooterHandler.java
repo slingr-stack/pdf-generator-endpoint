@@ -234,12 +234,14 @@ public class PdfHeaderFooterHandler {
             pb = new ProcessBuilder(commandParams);
             pb.inheritIO();
             process = pb.start();
-            process.waitFor();
+            int exitCode = process.waitFor();
+            logger.info(String.format("File processing exit with code %s", exitCode));
+
             return FileUtils.openInputStream(new File(targetTmpFile));
         } catch (InterruptedException | IOException e) {
-            logger.info("HTML can not be converted", e);
+            logger.error("HTML can not be converted", e);
         } catch (Exception ex) {
-            logger.info(String.format("Can not open stream for file [%s]", targetTmpFile), ex);
+            logger.error(String.format("Can not open stream for file [%s]", targetTmpFile), ex);
         } finally {
             if (process != null) {
                 process.destroy();

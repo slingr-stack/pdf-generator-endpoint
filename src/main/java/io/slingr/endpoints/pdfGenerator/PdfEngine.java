@@ -128,7 +128,7 @@ public class PdfEngine {
             commandParams.add(sourceTmpFile);
             commandParams.add(targetTmpFile);
         } catch (IOException e) {
-            logger.info("Error to create temporal files. " + e.getMessage());
+            logger.error("Error creating pdf temporal files", e);
             return null;
         }
         return PdfHeaderFooterHandler.openStream(commandParams, targetTmpFile);
