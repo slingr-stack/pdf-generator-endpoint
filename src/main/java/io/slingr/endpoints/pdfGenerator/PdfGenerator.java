@@ -395,13 +395,8 @@ public class PdfGenerator extends Endpoint {
     private final ReentrantLock pdfLock = new ReentrantLock();
 
     private void generateAutoPdf() {
-        pdfLock.lock();
-        try {
-            while (QueuePdf.getStreamInstance().getTotalSize() > 0) {
-                createPdf(QueuePdf.getStreamInstance().poll());
-            }
-        } finally {
-            pdfLock.unlock();
+        while (QueuePdf.getStreamInstance().getTotalSize() > 0) {
+            createPdf(QueuePdf.getStreamInstance().poll());
         }
     }
 }
