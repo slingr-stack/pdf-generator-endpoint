@@ -132,12 +132,15 @@ public class PdfGenerator extends Endpoint {
             if (data.contains("settings")) {
                 Json settings = data.json("settings");
 
-                for (String key : settings.keys()) {
-                    PDField field = pDAcroForm.getField(key);
-                    if (field != null) {
-                        field.setValue(settings.string(key));
-                    } else {
-                        appLogger.info(String.format("PDF Generator could not fill field [%s] with [%s].", key, settings.string(key)));
+                if(settings.contains("data")) {
+                    Json settingsData = settings.json("data");
+                    for (String key : settingsData.keys()) {
+                        PDField field = pDAcroForm.getField(key);
+                        if (field != null) {
+                            field.setValue(settingsData.string(key));
+                        } else {
+                            appLogger.info(String.format("PDF Generator could not fill field [%s] with [%s].", key, settingsData.string(key)));
+                        }
                     }
                 }
             }
