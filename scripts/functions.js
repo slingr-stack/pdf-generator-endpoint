@@ -43,3 +43,12 @@ endpoint.replaceHeaderAndFooter = function (fileId, settings, callbackData, call
     };
     return endpoint._replaceHeaderAndFooter(options, callbackData, callbacks);
 };
+
+endpoint.fillForm = function(fileId, settings, callbackData, callbacks) {
+
+    var options = {
+        fileId: fileId,
+        settings: settings || {}
+    };
+    return endpoint._fillForm(options, callbackData, callbacks);
+};

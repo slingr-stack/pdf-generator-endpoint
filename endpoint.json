@@ -84,6 +84,17 @@
                     "maxExpectedResponses": 1
                 }
             ]
+        },
+        {
+            "label": "Fill Form",
+            "name": "_fillForm",
+            "callbacks": [
+                {
+                    "name": "pdfResponse",
+                    "maxWaitingTime": 120000,
+                    "maxExpectedResponses": 1
+                }
+            ]
         }
     ],
     "scripts":[

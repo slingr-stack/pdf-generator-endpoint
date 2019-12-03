@@ -6,8 +6,10 @@ import freemarker.template.TemplateException;
 import io.slingr.endpoints.Endpoint;
 import io.slingr.endpoints.exceptions.EndpointException;
 import io.slingr.endpoints.exceptions.ErrorCode;
+import io.slingr.endpoints.framework.annotations.ApplicationLogger;
 import io.slingr.endpoints.framework.annotations.EndpointFunction;
 import io.slingr.endpoints.framework.annotations.SlingrEndpoint;
+import io.slingr.endpoints.services.AppLogs;
 import io.slingr.endpoints.services.rest.DownloadedFile;
 import io.slingr.endpoints.utils.Json;
 import io.slingr.endpoints.utils.Strings;
@@ -16,13 +18,15 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.multipdf.Splitter;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
+import org.apache.pdfbox.pdmodel.interactive.form.PDField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -38,6 +42,8 @@ public class PdfGenerator extends Endpoint {
     public static final String HTML = "html";
     private Logger logger = LoggerFactory.getLogger(PdfGenerator.class);
 
+    @ApplicationLogger
+    protected AppLogs appLogger;
 
     public void endpointStarted() {
         if (!properties().isLocalDeployment()) {
@@ -111,6 +117,51 @@ public class PdfGenerator extends Endpoint {
         return resp;
     }
 
+    @EndpointFunction(name = "_fillForm")
+    public Json fillForm(FunctionRequest request) {
+
+        Json data = request.getJsonParams();
+        String fileId = data.string("fileId");
+
+        try {
+            InputStream is = files().download(fileId).getFile();
+            PDDocument pdf = PDDocument.load(is);
+
+            PDAcroForm pDAcroForm = pdf.getDocumentCatalog().getAcroForm();
+
+            if (data.contains("settings")) {
+                Json settings = data.json("settings");
+
+                for (String key : settings.keys()) {
+                    PDField field = pDAcroForm.getField(key);
+                    if (field != null) {
+                        field.setValue(settings.string(key));
+                    } else {
+                        appLogger.info(String.format("PDF Generator could not fill field [%s] with [%s].", key, settings.string(key)));
+                    }
+                }
+            }
+
+            File temp = File.createTempFile("filled-pdf-" + UUID.randomUUID(), ".pdf");
+            pdf.save(temp);
+            pdf.close();
+
+            Json res = Json.map();
+            Json fileJson = files().upload(temp.getName(), new FileInputStream(temp), "application/pdf");
+
+            res.set("status", "ok");
+            res.set("file", fileJson);
+
+            events().send("pdfResponse", res, request.getFunctionId());
+
+        } catch (IOException e) {
+            logger.error("Can not generate PDF, I/O exception", e);
+            throw EndpointException.permanent(ErrorCode.GENERAL, "Failed to create file", e);
+        }
+
+        return Json.map();
+    }
+
     @EndpointFunction(name = "_mergeDocuments")
     public Json mergeDocuments(FunctionRequest request) {
 
@@ -152,7 +203,7 @@ public class PdfGenerator extends Endpoint {
                                     || (doc.is("start") && !doc.is("end") && i >= doc.integer("start"))
                                     || (!doc.is("start") && doc.is("end") && i <= doc.integer("end"))
                                     || (!doc.is("start") && !doc.is("end"))
-                                    ) {
+                            ) {
                                 merger.appendDocument(newDocument, page);
                             }
                             page.close();
