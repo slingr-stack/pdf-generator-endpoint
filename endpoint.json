@@ -95,6 +95,17 @@
                     "maxExpectedResponses": 1
                 }
             ]
+        },
+        {
+            "label": "Replace Images",
+            "name": "_replaceImages",
+            "callbacks": [
+                {
+                    "name": "pdfResponse",
+                    "maxWaitingTime": 120000,
+                    "maxExpectedResponses": 1
+                }
+            ]
         }
     ],
     "scripts":[

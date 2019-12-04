@@ -14,19 +14,25 @@ import io.slingr.endpoints.services.rest.DownloadedFile;
 import io.slingr.endpoints.utils.Json;
 import io.slingr.endpoints.utils.Strings;
 import io.slingr.endpoints.ws.exchange.FunctionRequest;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.pdfbox.cos.*;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.multipdf.Splitter;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDResources;
+import org.apache.pdfbox.pdmodel.graphics.PDXObject;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
 import org.apache.pdfbox.pdmodel.interactive.form.PDField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -121,46 +127,60 @@ public class PdfGenerator extends Endpoint {
     public Json fillForm(FunctionRequest request) {
 
         Json data = request.getJsonParams();
-        String fileId = data.string("fileId");
 
-        try {
-            InputStream is = files().download(fileId).getFile();
-            PDDocument pdf = PDDocument.load(is);
+        Executors.newSingleThreadScheduledExecutor().execute(() -> {
 
-            PDAcroForm pDAcroForm = pdf.getDocumentCatalog().getAcroForm();
+            String fileId = data.string("fileId");
+            Json res = Json.map();
+            try {
 
-            if (data.contains("settings")) {
-                Json settings = data.json("settings");
+                if (data.contains("settings")) {
+                    Json settings = data.json("settings");
 
-                if(settings.contains("data")) {
-                    Json settingsData = settings.json("data");
-                    for (String key : settingsData.keys()) {
-                        PDField field = pDAcroForm.getField(key);
-                        if (field != null) {
-                            field.setValue(settingsData.string(key));
-                        } else {
-                            appLogger.info(String.format("PDF Generator could not fill field [%s] with [%s].", key, settingsData.string(key)));
+                    InputStream is = files().download(fileId).getFile();
+                    PDDocument pdf = PDDocument.load(is);
+
+                    PDAcroForm pDAcroForm = pdf.getDocumentCatalog().getAcroForm();
+
+
+                    if (settings.contains("data")) {
+                        Json settingsData = settings.json("data");
+
+                        for (String key : settingsData.keys()) {
+                            PDField field = pDAcroForm.getField(key);
+                            if (field != null) {
+                                field.setValue(settingsData.string(key));
+                            } else {
+                                appLogger.info(String.format("PDF Generator could not fill field [%s] with [%s].", key, settingsData.string(key)));
+                            }
                         }
                     }
+
+
+                    File temp = File.createTempFile("filled-pdf-" + UUID.randomUUID(), ".pdf");
+                    pdf.save(temp);
+                    pdf.close();
+
+                    Json fileJson = files().upload(temp.getName(), new FileInputStream(temp), "application/pdf");
+
+                    res.set("status", "ok");
+                    res.set("file", fileJson);
+
+                    events().send("pdfResponse", res, request.getFunctionId());
+                } else {
+                    events().send("pdfResponse", res, request.getFunctionId());
                 }
+            } catch (IOException e) {
+
+                logger.error("Can not generate PDF, I/O exception", e);
+
+                res.set("status", "ok");
+                res.set("message", "Failed to create file");
+
+                events().send("pdfResponse", res, request.getFunctionId());
             }
 
-            File temp = File.createTempFile("filled-pdf-" + UUID.randomUUID(), ".pdf");
-            pdf.save(temp);
-            pdf.close();
-
-            Json res = Json.map();
-            Json fileJson = files().upload(temp.getName(), new FileInputStream(temp), "application/pdf");
-
-            res.set("status", "ok");
-            res.set("file", fileJson);
-
-            events().send("pdfResponse", res, request.getFunctionId());
-
-        } catch (IOException e) {
-            logger.error("Can not generate PDF, I/O exception", e);
-            throw EndpointException.permanent(ErrorCode.GENERAL, "Failed to create file", e);
-        }
+        });
 
         return Json.map();
     }
@@ -444,6 +464,115 @@ public class PdfGenerator extends Endpoint {
         logger.info("Pdf has been successfully created. Sending [pdfResponse] event to the app");
         events().send("pdfResponse", res, req.getFunctionId());
         logger.info("Done sending [pdfResponse] event to the app");
+    }
+
+    @EndpointFunction(name = "_replaceImages")
+    public Json replaceImages(FunctionRequest request) {
+
+        Json data = request.getJsonParams();
+
+        Executors.newSingleThreadScheduledExecutor().execute(() -> {
+
+            String requestId = request.getFunctionId();
+            String fileId = data.string("fileId");
+            Json res = Json.map();
+            try {
+
+                if (data.contains("settings")) {
+
+                    InputStream is = files().download(fileId).getFile();
+                    PDDocument pdf = PDDocument.load(is);
+
+                    Json settings = data.json("settings");
+
+                    if (settings.contains("images")) {
+                        List<Json> settingsImages = settings.jsons("images");
+
+                        for (Json image : settingsImages) {
+                            if (image.contains("index") && image.contains("fileId")) {
+                                int index = image.integer("index");
+                                replaceImageInPdf(pdf, image.string("fileId"), index);
+                            }
+                        }
+                    }
+
+                    File temp = File.createTempFile("pdf-filled-" + UUID.randomUUID(), ".pdf");
+                    pdf.save(temp);
+                    pdf.close();
+
+                    Json fileJson = files().upload(temp.getName(), new FileInputStream(temp), "application/pdf");
+
+                    res.set("status", "ok");
+                    res.set("file", fileJson);
+
+                    events().send("pdfResponse", res, requestId);
+                } else {
+                    events().send("pdfResponse", res, requestId);
+                }
+
+            } catch (IOException e) {
+
+                logger.error("Can not generate PDF, I/O exception", e);
+
+                res.set("status", "ok");
+                res.set("message", "Failed to create file");
+
+                events().send("pdfResponse", res, requestId);
+            }
+
+        });
+
+        return Json.map();
+    }
+
+    private static void copyInputStreamToFile(InputStream inputStream, File file)
+            throws IOException {
+
+        try (FileOutputStream outputStream = new FileOutputStream(file)) {
+
+            int read;
+            byte[] bytes = new byte[1024];
+
+            while ((read = inputStream.read(bytes)) != -1) {
+                outputStream.write(bytes, 0, read);
+            }
+
+        }
+    }
+
+    private void replaceImageInPdf(PDDocument pdf, String imageId, int index) {
+
+        try {
+
+            int indexInDocument = 0;
+
+            if (pdf.getNumberOfPages() > 0) {
+
+                InputStream imageIs = files().download(imageId).getFile();
+                File img = File.createTempFile("pdf-img-" + UUID.randomUUID(), ".png");
+                copyInputStreamToFile(imageIs, img);
+
+                PDResources resources = pdf.getPage(0).getResources();
+
+                for (COSName xObjectName : resources.getXObjectNames()) {
+                    PDXObject xObject = resources.getXObject(xObjectName);
+                    if (xObject instanceof PDImageXObject) {
+
+                        if (indexInDocument == index) {
+                            PDImageXObject replacement_img = PDImageXObject.createFromFile(img.getPath(), pdf);
+                            resources.put(xObjectName, replacement_img);
+                            return;
+                        }
+                        indexInDocument++;
+                    }
+                }
+
+                appLogger.warn(String.format("Image not found for index [%s]", index));
+            }
+
+        } catch (IOException e) {
+            appLogger.warn("Can not when replace image", e);
+        }
     }
 
     private final ReentrantLock pdfLock = new ReentrantLock();
