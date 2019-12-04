@@ -61,3 +61,13 @@ endpoint.replaceImages = function(fileId, settings, callbackData, callbacks) {
     };
     return endpoint._replaceImages(options, callbackData, callbacks);
 };
+
+
+endpoint.addImages = function(fileId, settings, callbackData, callbacks) {
+
+    var options = {
+        fileId: fileId,
+        settings: settings || {}
+    };
+    return endpoint._addImages(options, callbackData, callbacks);
+};

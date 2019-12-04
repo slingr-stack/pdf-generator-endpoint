@@ -14,13 +14,13 @@ import io.slingr.endpoints.services.rest.DownloadedFile;
 import io.slingr.endpoints.utils.Json;
 import io.slingr.endpoints.utils.Strings;
 import io.slingr.endpoints.ws.exchange.FunctionRequest;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.pdfbox.cos.*;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.multipdf.Splitter;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.graphics.PDXObject;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
@@ -30,8 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
@@ -174,7 +172,7 @@ public class PdfGenerator extends Endpoint {
 
                 logger.error("Can not generate PDF, I/O exception", e);
 
-                res.set("status", "ok");
+                res.set("status", "error");
                 res.set("message", "Failed to create file");
 
                 events().send("pdfResponse", res, request.getFunctionId());
@@ -496,7 +494,7 @@ public class PdfGenerator extends Endpoint {
                         }
                     }
 
-                    File temp = File.createTempFile("pdf-filled-" + UUID.randomUUID(), ".pdf");
+                    File temp = File.createTempFile("pdf-modified-" + UUID.randomUUID(), ".pdf");
                     pdf.save(temp);
                     pdf.close();
 
@@ -512,9 +510,9 @@ public class PdfGenerator extends Endpoint {
 
             } catch (IOException e) {
 
-                logger.error("Can not generate PDF, I/O exception", e);
+                appLogger.info("Can not generate PDF, I/O exception", e);
 
-                res.set("status", "ok");
+                res.set("status", "error");
                 res.set("message", "Failed to create file");
 
                 events().send("pdfResponse", res, requestId);
@@ -548,8 +546,14 @@ public class PdfGenerator extends Endpoint {
 
             if (pdf.getNumberOfPages() > 0) {
 
+                Json imageMetadata = files().metadata(imageId);
+                String extension = ".jpg";
+                if (imageMetadata.contains("contentType") && imageMetadata.string("contentType").equals("image/png")) {
+                    extension = ".png";
+                }
+
                 InputStream imageIs = files().download(imageId).getFile();
-                File img = File.createTempFile("pdf-img-" + UUID.randomUUID(), ".png");
+                File img = File.createTempFile("pdf-img-" + UUID.randomUUID(), extension);
                 copyInputStreamToFile(imageIs, img);
 
                 PDResources resources = pdf.getPage(0).getResources();
@@ -567,12 +571,94 @@ public class PdfGenerator extends Endpoint {
                     }
                 }
 
-                appLogger.warn(String.format("Image not found for index [%s]", index));
+                appLogger.info(String.format("Image not found for index [%s]", index));
             }
 
         } catch (IOException e) {
-            appLogger.warn("Can not when replace image", e);
+            appLogger.info("Can not when replace image", e);
         }
+    }
+
+
+    @EndpointFunction(name = "_addImages")
+    public void addImages(FunctionRequest request) {
+
+        Json data = request.getJsonParams();
+
+        Executors.newSingleThreadScheduledExecutor().execute(() -> {
+
+            String requestId = request.getFunctionId();
+            String fileId = data.string("fileId");
+            Json res = Json.map();
+
+            try {
+                InputStream is = files().download(fileId).getFile();
+                PDDocument pdf = PDDocument.load(is);
+
+                Json settings = data.json("settings");
+
+                if (settings.contains("images")) {
+                    List<Json> settingsImages = settings.jsons("images");
+
+                    for (Json image : settingsImages) {
+                        if (image.contains("pageIndex") && image.contains("fileId")) {
+
+                            int pageIndex = image.integer("pageIndex");
+
+                            if (pageIndex < pdf.getNumberOfPages()) {
+
+                                String imageId = image.string("fileId");
+
+                                PDPage page = pdf.getPage(pageIndex);
+
+                                DownloadedFile downloadedFile = files().download(imageId);
+                                InputStream imageIs = downloadedFile.getFile();
+
+                                Json imageMetadata = files().metadata(imageId);
+                                String extension = ".jpg";
+                                if (imageMetadata.contains("contentType") && imageMetadata.string("contentType").equals("image/png")) {
+                                    extension = ".png";
+                                }
+
+                                File img = File.createTempFile("pdf-img-" + UUID.randomUUID(), extension);
+                                copyInputStreamToFile(imageIs, img);
+
+                                PDImageXObject pdImage = PDImageXObject.createFromFileByContent(img, pdf);
+                                PDPageContentStream contentStream = new PDPageContentStream(pdf, page, PDPageContentStream.AppendMode.APPEND, true);
+
+                                int x = image.contains("x") ? image.integer("x") : 20;
+                                int y = image.contains("y") ? image.integer("y") : 20;
+                                int width = image.contains("width") ? image.integer("width") : 100;
+                                int height = image.contains("height") ? image.integer("height") : 100;
+
+                                contentStream.drawImage(pdImage, x, y, width, height);
+                                contentStream.close();
+
+                            }
+                        }
+                    }
+                }
+
+                File temp = File.createTempFile("pdf-modified-" + UUID.randomUUID(), ".pdf");
+                pdf.save(temp);
+                pdf.close();
+
+                Json fileJson = files().upload(temp.getName(), new FileInputStream(temp), "application/pdf");
+
+                res.set("status", "ok");
+                res.set("file", fileJson);
+
+                events().send("pdfResponse", res, requestId);
+            } catch (IOException e) {
+
+                appLogger.info("Can not generate PDF, I/O exception", e);
+                res.set("status", "error");
+                res.set("message", "Failed to create file");
+
+                events().send("pdfResponse", res, requestId);
+            }
+
+        });
     }
 
     private final ReentrantLock pdfLock = new ReentrantLock();
