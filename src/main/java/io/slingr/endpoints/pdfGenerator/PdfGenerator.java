@@ -154,12 +154,12 @@ public class PdfGenerator extends Endpoint {
                         }
                     }
 
-
-                    File temp = File.createTempFile("filled-pdf-" + UUID.randomUUID(), ".pdf");
+                    String fileName = getFileName("pdf", settings);
+                    File temp = File.createTempFile(fileName, ".pdf");
                     pdf.save(temp);
                     pdf.close();
 
-                    Json fileJson = files().upload(temp.getName(), new FileInputStream(temp), "application/pdf");
+                    Json fileJson = files().upload(fileName, new FileInputStream(temp), "application/pdf");
 
                     res.set("status", "ok");
                     res.set("file", fileJson);
@@ -494,11 +494,12 @@ public class PdfGenerator extends Endpoint {
                         }
                     }
 
-                    File temp = File.createTempFile("pdf-modified-" + UUID.randomUUID(), ".pdf");
+                    String fileName = getFileName("pdf", settings);
+                    File temp = File.createTempFile(fileName, ".pdf");
                     pdf.save(temp);
                     pdf.close();
 
-                    Json fileJson = files().upload(temp.getName(), new FileInputStream(temp), "application/pdf");
+                    Json fileJson = files().upload(fileName, new FileInputStream(temp), "application/pdf");
 
                     res.set("status", "ok");
                     res.set("file", fileJson);
@@ -639,11 +640,12 @@ public class PdfGenerator extends Endpoint {
                     }
                 }
 
-                File temp = File.createTempFile("pdf-modified-" + UUID.randomUUID(), ".pdf");
+                String fileName = getFileName("pdf", settings);
+                File temp = File.createTempFile(fileName, ".pdf");
                 pdf.save(temp);
                 pdf.close();
 
-                Json fileJson = files().upload(temp.getName(), new FileInputStream(temp), "application/pdf");
+                Json fileJson = files().upload(fileName, new FileInputStream(temp), "application/pdf");
 
                 res.set("status", "ok");
                 res.set("file", fileJson);
@@ -668,4 +670,13 @@ public class PdfGenerator extends Endpoint {
             createPdf(QueuePdf.getStreamInstance().poll());
         }
     }
+
+    private String getFileName(String prefix, Json settings) {
+        String fileName = prefix + "-" + new Date().getTime();
+        if (settings.contains("name") && StringUtils.isNotBlank(settings.string("name"))) {
+            fileName = settings.string("name");
+        }
+        return fileName;
+    }
+
 }
