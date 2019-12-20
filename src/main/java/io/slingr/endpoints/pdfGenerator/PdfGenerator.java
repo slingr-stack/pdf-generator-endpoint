@@ -23,14 +23,22 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.graphics.PDXObject;
+import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
+import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceRGB;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationWidget;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceCharacteristicsDictionary;
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
 import org.apache.pdfbox.pdmodel.interactive.form.PDField;
+import org.apache.pdfbox.pdmodel.interactive.form.PDTextField;
+import org.apache.pdfbox.pdmodel.interactive.form.PDVariableText;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.*;
 import java.io.*;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -147,7 +155,74 @@ public class PdfGenerator extends Endpoint {
                         for (String key : settingsData.keys()) {
                             PDField field = pDAcroForm.getField(key);
                             if (field != null) {
-                                field.setValue(settingsData.string(key));
+
+                                if (settingsData.object(key) instanceof Json) {
+
+                                    Json valSettings = settingsData.json(key);
+
+                                    if (valSettings.contains("backgroundColor")) {
+                                        for (PDAnnotationWidget w : field.getWidgets()) {
+
+                                            PDAppearanceCharacteristicsDictionary fieldAppearance = w.getAppearanceCharacteristics();
+                                            if (fieldAppearance == null) {
+                                                fieldAppearance = new PDAppearanceCharacteristicsDictionary(new COSDictionary());
+                                            }
+
+                                            Color bgColor = Color.decode(valSettings.string("backgroundColor"));
+                                            float r = bgColor.getRed() / 255f;
+                                            float g = bgColor.getGreen() / 255f;
+                                            float b = bgColor.getBlue() / 255f;
+                                            PDColor color = new PDColor(new float[]{r, g, b}, PDDeviceRGB.INSTANCE);
+                                            fieldAppearance.setBackground(color);
+
+                                            w.setAppearanceCharacteristics(fieldAppearance);
+                                        }
+
+                                    }
+
+                                    if (valSettings.contains("value")) {
+                                        field.setValue(valSettings.string("value"));
+                                    }
+
+                                    if (field instanceof PDTextField) {
+                                        PDTextField tf = (PDTextField) field;
+
+                                        String oldAppearance = tf.getDefaultAppearance();
+                                        String old[] = oldAppearance.split(" ");
+                                        String newAppearance = old[0] + " ";
+                                        if (valSettings.contains("textSize")) {
+                                            newAppearance += valSettings.integer("textSize") + " ";
+                                        } else {
+                                            newAppearance += old[1] + " ";
+                                        }
+
+                                        newAppearance += old[2] + " ";
+
+                                        String colorRgb = "0 0 1 rg";
+                                        if (valSettings.contains("textColor")) {
+                                            Color color = Color.decode(valSettings.string("textColor"));
+                                            colorRgb = color.getRed() / 255f + " " + color.getGreen() / 255f + " " + color.getBlue() / 255f + " rg";
+                                        }
+                                        newAppearance += " " + colorRgb + " rgb";
+
+                                        tf.setDefaultAppearance(newAppearance);
+
+                                        if(valSettings.contains("textAlignment")) {
+                                            int textAlign = PDVariableText.QUADDING_LEFT;
+                                            if("CENTER".equals(valSettings.string("textAlignment"))){
+                                                textAlign = PDVariableText.QUADDING_CENTERED;
+                                            } else if("RIGHT".equals(valSettings.string("textAlignment"))){
+                                                textAlign = PDVariableText.QUADDING_RIGHT;
+                                            }
+                                            tf.setQ(textAlign);
+                                        }
+                                    }
+
+                                    pDAcroForm.refreshAppearances();
+
+                                } else {
+                                    field.setValue(settingsData.string(key));
+                                }
                             } else {
                                 appLogger.info(String.format("PDF Generator could not fill field [%s] with [%s].", key, settingsData.string(key)));
                             }
