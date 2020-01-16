@@ -57,6 +57,14 @@
             <version>2.0.15</version>
         </dependency>
 
+        <!-- add all iText 7 Community modules -->
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>itext7-core</artifactId>
+            <version>RELEASE</version>
+            <type>pom</type>
+        </dependency>
+
         <!-- Testing Modules -->
         <dependency>
             <groupId>junit</groupId>

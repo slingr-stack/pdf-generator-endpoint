@@ -18,24 +18,12 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.pdfbox.cos.*;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.multipdf.Splitter;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.PDResources;
+import org.apache.pdfbox.pdmodel.*;
 import org.apache.pdfbox.pdmodel.graphics.PDXObject;
-import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
-import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceRGB;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
-import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationWidget;
-import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceCharacteristicsDictionary;
-import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
-import org.apache.pdfbox.pdmodel.interactive.form.PDField;
-import org.apache.pdfbox.pdmodel.interactive.form.PDTextField;
-import org.apache.pdfbox.pdmodel.interactive.form.PDVariableText;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.*;
 import java.io.*;
 import java.util.*;
 import java.util.List;
@@ -53,11 +41,13 @@ public class PdfGenerator extends Endpoint {
     public static final String IMAGE_ID = "imageId";
     public static final String HTML = "html";
     private Logger logger = LoggerFactory.getLogger(PdfGenerator.class);
+    private PdfFillForm pdfFillForm;
 
     @ApplicationLogger
     protected AppLogs appLogger;
 
     public void endpointStarted() {
+        this.pdfFillForm = new PdfFillForm(appLogger);
         if (!properties().isLocalDeployment()) {
             try {
                 PdfFilesUtils pdfFilesUtils = new PdfFilesUtils();
@@ -137,103 +127,19 @@ public class PdfGenerator extends Endpoint {
         Executors.newSingleThreadScheduledExecutor().execute(() -> {
 
             String fileId = data.string("fileId");
+            if (fileId == null) {
+                appLogger.info("Can not find any pdf with null file id");
+                return;
+            }
             Json res = Json.map();
             try {
 
                 if (data.contains("settings")) {
                     Json settings = data.json("settings");
 
-                    InputStream is = files().download(fileId).getFile();
-                    PDDocument pdf = PDDocument.load(is);
-
-                    PDAcroForm pDAcroForm = pdf.getDocumentCatalog().getAcroForm();
-
-
-                    if (settings.contains("data")) {
-                        Json settingsData = settings.json("data");
-
-                        for (String key : settingsData.keys()) {
-                            PDField field = pDAcroForm.getField(key);
-                            if (field != null) {
-
-                                if (settingsData.object(key) instanceof Json) {
-
-                                    Json valSettings = settingsData.json(key);
-
-                                    if (valSettings.contains("backgroundColor")) {
-                                        for (PDAnnotationWidget w : field.getWidgets()) {
-
-                                            PDAppearanceCharacteristicsDictionary fieldAppearance = w.getAppearanceCharacteristics();
-                                            if (fieldAppearance == null) {
-                                                fieldAppearance = new PDAppearanceCharacteristicsDictionary(new COSDictionary());
-                                            }
-
-                                            Color bgColor = Color.decode(valSettings.string("backgroundColor"));
-                                            float r = bgColor.getRed() / 255f;
-                                            float g = bgColor.getGreen() / 255f;
-                                            float b = bgColor.getBlue() / 255f;
-                                            PDColor color = new PDColor(new float[]{r, g, b}, PDDeviceRGB.INSTANCE);
-                                            fieldAppearance.setBackground(color);
-
-                                            w.setAppearanceCharacteristics(fieldAppearance);
-                                        }
-
-                                    }
-
-                                    if (valSettings.contains("value")) {
-                                        field.setValue(valSettings.string("value"));
-                                    }
-
-                                    if (field instanceof PDTextField) {
-                                        PDTextField tf = (PDTextField) field;
-
-                                        String oldAppearance = tf.getDefaultAppearance();
-                                        String old[] = oldAppearance.split(" ");
-                                        String newAppearance = old[0] + " ";
-                                        if (valSettings.contains("textSize")) {
-                                            newAppearance += valSettings.integer("textSize") + " ";
-                                        } else {
-                                            newAppearance += old[1] + " ";
-                                        }
-
-                                        newAppearance += old[2] + " ";
-
-                                        String colorRgb = "0 0 1 rg";
-                                        if (valSettings.contains("textColor")) {
-                                            Color color = Color.decode(valSettings.string("textColor"));
-                                            colorRgb = color.getRed() / 255f + " " + color.getGreen() / 255f + " " + color.getBlue() / 255f + " rg";
-                                        }
-                                        newAppearance += " " + colorRgb + " rgb";
-
-                                        tf.setDefaultAppearance(newAppearance);
-
-                                        if(valSettings.contains("textAlignment")) {
-                                            int textAlign = PDVariableText.QUADDING_LEFT;
-                                            if("CENTER".equals(valSettings.string("textAlignment"))){
-                                                textAlign = PDVariableText.QUADDING_CENTERED;
-                                            } else if("RIGHT".equals(valSettings.string("textAlignment"))){
-                                                textAlign = PDVariableText.QUADDING_RIGHT;
-                                            }
-                                            tf.setQ(textAlign);
-                                        }
-                                    }
-
-                                    pDAcroForm.refreshAppearances();
-
-                                } else {
-                                    field.setValue(settingsData.string(key));
-                                }
-                            } else {
-                                appLogger.info(String.format("PDF Generator could not fill field [%s] with [%s].", key, settingsData.string(key)));
-                            }
-                        }
-                    }
+                    File temp = pdfFillForm.fillForm(files(), fileId, settings);
 
                     String fileName = getFileName("pdf", settings);
-                    File temp = File.createTempFile(fileName, ".pdf");
-                    pdf.save(temp);
-                    pdf.close();
-
                     Json fileJson = files().upload(fileName, new FileInputStream(temp), "application/pdf");
 
                     res.set("status", "ok");
