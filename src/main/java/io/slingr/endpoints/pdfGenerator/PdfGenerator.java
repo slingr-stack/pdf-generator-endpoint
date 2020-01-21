@@ -138,6 +138,10 @@ public class PdfGenerator extends Endpoint {
                     Json settings = data.json("settings");
 
                     File temp = pdfFillForm.fillForm(files(), fileId, settings);
+                    if(temp == null) {
+                        appLogger.info("Can generate filled form. Contact the support.");
+                        return;
+                    }
 
                     String fileName = getFileName("pdf", settings);
                     Json fileJson = files().upload(fileName, new FileInputStream(temp), "application/pdf");
@@ -151,7 +155,7 @@ public class PdfGenerator extends Endpoint {
                 }
             } catch (IOException e) {
 
-                logger.error("Can not generate PDF, I/O exception", e);
+                appLogger.error("Can not generate PDF, I/O exception", e);
 
                 res.set("status", "error");
                 res.set("message", "Failed to create file");
@@ -475,11 +479,11 @@ public class PdfGenerator extends Endpoint {
                         }
                     }
 
-                    String fileName = getFileName("pdf", settings);
-                    File temp = File.createTempFile(fileName, ".pdf");
+                    File temp = File.createTempFile("pdf-images-" + new Date().getTime(), ".pdf");
                     pdf.save(temp);
                     pdf.close();
 
+                    String fileName = getFileName("pdf", settings);
                     Json fileJson = files().upload(fileName, new FileInputStream(temp), "application/pdf");
 
                     res.set("status", "ok");

@@ -19,6 +19,7 @@ import org.apache.commons.lang.StringUtils;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,92 +36,97 @@ public class PdfFillForm {
 
     public File fillForm(Files files, String pdfFileId, Json settings) throws IOException {
 
-        InputStream is = files.download(pdfFileId).getFile();
+        try {
+            InputStream is = files.download(pdfFileId).getFile();
 
-        File tmp = File.createTempFile("pdf-tmp", ".pdf");
+            File tmp = File.createTempFile("pdf-filled-" + new Date().getTime(), ".pdf");
 
-        PdfWriter desPdf = new PdfWriter(tmp);
-        PdfReader srcPdf = new PdfReader(is);
+            PdfWriter desPdf = new PdfWriter(tmp);
+            PdfReader srcPdf = new PdfReader(is);
 
-        PdfDocument pdfDoc = new PdfDocument(srcPdf, desPdf);
+            PdfDocument pdfDoc = new PdfDocument(srcPdf, desPdf);
 
-        PdfAcroForm form = PdfAcroForm.getAcroForm(pdfDoc, true);
-        form.setGenerateAppearance(true);
+            PdfAcroForm form = PdfAcroForm.getAcroForm(pdfDoc, true);
+            form.setGenerateAppearance(true);
 
-        if (settings.contains("data")) {
-            Json settingsData = settings.json("data");
+            if (settings.contains("data")) {
+                Json settingsData = settings.json("data");
 
-            for (String givenFormField : settingsData.keys()) {
+                for (String givenFormField : settingsData.keys()) {
 
-                PdfFormField formField = form.getField(givenFormField);
-                if (formField != null) {
+                    PdfFormField formField = form.getField(givenFormField);
+                    if (formField != null) {
 
-                    Json fieldSettings = settingsData.json(givenFormField);
-                    if (fieldSettings != null) {
+                        Json fieldSettings = settingsData.json(givenFormField);
+                        if (fieldSettings != null) {
 
-                        if (fieldSettings.contains("fontFileId")) {
+                            if (fieldSettings.contains("fontFileId")) {
 
-                            String fontFileId = fieldSettings.string("fontFileId");
-                            String font = fonts.get(fontFileId);
-                            if (font == null) {
-                                InputStream fontIs = files.download(fontFileId).getFile();
-                                File tmpFont = File.createTempFile("font", ".ttf");
-                                FileUtils.copyInputStreamToFile(fontIs, tmpFont);
-                                font = tmpFont.getPath();
-                                fonts.put(fontFileId, font);
+                                String fontFileId = fieldSettings.string("fontFileId");
+                                String font = fonts.get(fontFileId);
+                                if (font == null) {
+                                    InputStream fontIs = files.download(fontFileId).getFile();
+                                    File tmpFont = File.createTempFile("font", ".ttf");
+                                    FileUtils.copyInputStreamToFile(fontIs, tmpFont);
+                                    font = tmpFont.getPath();
+                                    fonts.put(fontFileId, font);
+                                }
+
+                                if (font != null) {
+                                    PdfFont pdfFont = PdfFontFactory.createFont(font, PdfEncodings.IDENTITY_H);
+                                    formField.setFont(pdfFont);
+                                } else {
+                                    appLogger.error(String.format("Can not find font for %s", fontFileId));
+                                }
                             }
 
-                            if (font != null) {
-                                PdfFont pdfFont = PdfFontFactory.createFont(font, PdfEncodings.IDENTITY_H);
-                                formField.setFont(pdfFont);
-                            } else {
-                                appLogger.error(String.format("Can not find font for %s", fontFileId));
+                            if (fieldSettings.contains("value")) {
+                                formField.setValue(fieldSettings.string("value"));
                             }
-                        }
 
-                        if (fieldSettings.contains("value")) {
-                            formField.setValue(fieldSettings.string("value"));
-                        }
-
-                        if (fieldSettings.contains("textSize")) {
-                            formField.setFontSize(fieldSettings.integer("textSize"));
-                        }
-
-                        if (fieldSettings.contains("backgroundColor")) {
-                            formField.setBackgroundColor(hex2Rgb(fieldSettings.string("backgroundColor")));
-                        }
-
-                        if (fieldSettings.contains("textColor")) {
-                            formField.setColor(hex2Rgb(fieldSettings.string("textColor")));
-                        }
-
-                        if (fieldSettings.contains("textAlignment")) {
-                            int textAlign = PdfFormField.ALIGN_LEFT;
-                            if ("CENTER".equals(fieldSettings.string("textAlignment"))) {
-                                textAlign = PdfFormField.ALIGN_CENTER;
-                            } else if ("RIGHT".equals(fieldSettings.string("textAlignment"))) {
-                                textAlign = PdfFormField.ALIGN_RIGHT;
+                            if (fieldSettings.contains("textSize")) {
+                                formField.setFontSize(fieldSettings.integer("textSize"));
                             }
-                            formField.setJustification(textAlign);
+
+                            if (fieldSettings.contains("backgroundColor")) {
+                                formField.setBackgroundColor(hex2Rgb(fieldSettings.string("backgroundColor")));
+                            }
+
+                            if (fieldSettings.contains("textColor")) {
+                                formField.setColor(hex2Rgb(fieldSettings.string("textColor")));
+                            }
+
+                            if (fieldSettings.contains("textAlignment")) {
+                                int textAlign = PdfFormField.ALIGN_LEFT;
+                                if ("CENTER".equals(fieldSettings.string("textAlignment"))) {
+                                    textAlign = PdfFormField.ALIGN_CENTER;
+                                } else if ("RIGHT".equals(fieldSettings.string("textAlignment"))) {
+                                    textAlign = PdfFormField.ALIGN_RIGHT;
+                                }
+                                formField.setJustification(textAlign);
+                            }
+
+                            boolean readOnly = false;
+                            if (fieldSettings.contains("readOnly")) {
+                                readOnly = fieldSettings.bool("readOnly");
+                            }
+                            formField.setReadOnly(readOnly);
+
                         }
 
-                        boolean readOnly = false;
-                        if (fieldSettings.contains("readOnly")) {
-                            readOnly = fieldSettings.bool("readOnly");
-                        }
-                        formField.setReadOnly(readOnly);
-
+                    } else {
+                        appLogger.info(String.format("Can not find field %s for pdf file %s", givenFormField, pdfFileId));
                     }
-
-                } else {
-                    appLogger.info(String.format("Can not find field %s for pdf file %s", givenFormField, pdfFileId));
                 }
             }
+
+            pdfDoc.close();
+            return tmp;
+        } catch (Exception ex) {
+            appLogger.error("Can not fill pdf file. " + ex.getMessage());
         }
 
-        pdfDoc.close();
-
-        return tmp;
+        return null;
 
     }
 
