@@ -55,6 +55,8 @@ endpoint.fillForm = function(fileId, settings, callbackData, callbacks) {
 
 endpoint.fillFormSync = function(fileId, settings, callbackData, callbacks) {
 
+    sys.logs.info("Fill form sync");
+
     var options = {
         fileId: fileId,
         sync: true,
