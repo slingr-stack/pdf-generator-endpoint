@@ -36,15 +36,19 @@ public class PdfFillForm {
 
     public File fillForm(Files files, String pdfFileId, Json settings) throws IOException {
 
+        InputStream is = null;
+        PdfDocument pdfDoc = null;
+
         try {
-            InputStream is = files.download(pdfFileId).getFile();
+
+            is = files.download(pdfFileId).getFile();
 
             File tmp = File.createTempFile("pdf-filled-" + new Date().getTime(), ".pdf");
 
             PdfWriter desPdf = new PdfWriter(tmp);
             PdfReader srcPdf = new PdfReader(is);
 
-            PdfDocument pdfDoc = new PdfDocument(srcPdf, desPdf);
+            pdfDoc = new PdfDocument(srcPdf, desPdf);
 
             PdfAcroForm form = PdfAcroForm.getAcroForm(pdfDoc, true);
             form.setGenerateAppearance(true);
@@ -65,11 +69,26 @@ public class PdfFillForm {
                                 String fontFileId = fieldSettings.string("fontFileId");
                                 String font = fonts.get(fontFileId);
                                 if (font == null) {
-                                    InputStream fontIs = files.download(fontFileId).getFile();
-                                    File tmpFont = File.createTempFile("font", ".ttf");
-                                    FileUtils.copyInputStreamToFile(fontIs, tmpFont);
-                                    font = tmpFont.getPath();
-                                    fonts.put(fontFileId, font);
+                                    InputStream fontIs = null;
+                                    try {
+                                        fontIs = files.download(fontFileId).getFile();
+                                        File tmpFont = File.createTempFile("font", ".ttf");
+                                        FileUtils.copyInputStreamToFile(fontIs, tmpFont);
+                                        font = tmpFont.getPath();
+                                        fonts.put(fontFileId, font);
+                                    } catch (Exception ex) {
+                                        appLogger.error("Can not copy font. ", ex);
+                                    } finally {
+
+                                        try {
+                                            if (fontIs != null) {
+                                                fontIs.close();
+                                            }
+
+                                        } catch (IOException ioe) {
+                                            appLogger.error("Can not close font. ", ioe);
+                                        }
+                                    }
                                 }
 
                                 if (font != null) {
@@ -120,10 +139,23 @@ public class PdfFillForm {
                 }
             }
 
-            pdfDoc.close();
+
             return tmp;
         } catch (Exception ex) {
             appLogger.error("Can not fill pdf file. " + ex.getMessage());
+        } finally {
+
+            try {
+                if (is != null) {
+                    is.close();
+                }
+                if (pdfDoc != null) {
+                    pdfDoc.close();
+                }
+
+            } catch (IOException ioe) {
+                appLogger.error("Can not close PDF document. ", ioe);
+            }
         }
 
         return null;

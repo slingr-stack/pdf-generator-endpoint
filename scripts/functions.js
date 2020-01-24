@@ -53,6 +53,16 @@ endpoint.fillForm = function(fileId, settings, callbackData, callbacks) {
     return endpoint._fillForm(options, callbackData, callbacks);
 };
 
+endpoint.fillFormSync = function(fileId, settings, callbackData, callbacks) {
+
+    var options = {
+        fileId: fileId,
+        sync: true,
+        settings: settings || {}
+    };
+    return endpoint._fillForm(options, callbackData, callbacks);
+};
+
 endpoint.replaceImages = function(fileId, settings, callbackData, callbacks) {
 
     var options = {

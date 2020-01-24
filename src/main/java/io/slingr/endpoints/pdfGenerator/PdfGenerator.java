@@ -124,48 +124,66 @@ public class PdfGenerator extends Endpoint {
 
         Json data = request.getJsonParams();
 
-        Executors.newSingleThreadScheduledExecutor().execute(() -> {
-
-            String fileId = data.string("fileId");
-            if (fileId == null) {
-                appLogger.info("Can not find any pdf with null file id");
-                return;
-            }
-            Json res = Json.map();
-            try {
-
-                if (data.contains("settings")) {
-                    Json settings = data.json("settings");
-
-                    File temp = pdfFillForm.fillForm(files(), fileId, settings);
-                    if(temp == null) {
-                        appLogger.info("Can generate filled form. Contact the support.");
-                        return;
-                    }
-
-                    String fileName = getFileName("pdf", settings);
-                    Json fileJson = files().upload(fileName, new FileInputStream(temp), "application/pdf");
-
-                    res.set("status", "ok");
-                    res.set("file", fileJson);
-
-                    events().send("pdfResponse", res, request.getFunctionId());
-                } else {
-                    events().send("pdfResponse", res, request.getFunctionId());
-                }
-            } catch (IOException e) {
-
-                appLogger.error("Can not generate PDF, I/O exception", e);
-
-                res.set("status", "error");
-                res.set("message", "Failed to create file");
-
-                events().send("pdfResponse", res, request.getFunctionId());
-            }
-
-        });
+        if (data.contains("sync") && data.bool("sync")) {
+            fillForm(request, data);
+        } else {
+            Executors.newSingleThreadScheduledExecutor().execute(() -> {
+                fillForm(request, data);
+            });
+        }
 
         return Json.map();
+    }
+
+    private void fillForm(FunctionRequest request, Json data) {
+        String fileId = data.string("fileId");
+        if (fileId == null) {
+            appLogger.info("Can not find any pdf with null file id");
+            return;
+        }
+        Json res = Json.map();
+        InputStream tmpIs = null;
+        try {
+
+            if (data.contains("settings")) {
+                Json settings = data.json("settings");
+
+                File temp = pdfFillForm.fillForm(files(), fileId, settings);
+                if (temp == null) {
+                    appLogger.info("Can generate filled form. Contact the support.");
+                    return;
+                }
+
+                String fileName = getFileName("pdf", settings);
+                appLogger.info("Uploading file");
+                tmpIs = new FileInputStream(temp);
+
+                Json fileJson = files().upload(fileName, tmpIs, "application/pdf");
+
+                res.set("status", "ok");
+                res.set("file", fileJson);
+
+                events().send("pdfResponse", res, request.getFunctionId());
+            } else {
+                events().send("pdfResponse", res, request.getFunctionId());
+            }
+        } catch (IOException e) {
+
+            appLogger.error("Can not generate PDF, I/O exception", e);
+
+            res.set("status", "error");
+            res.set("message", "Failed to create file");
+
+            events().send("pdfResponse", res, request.getFunctionId());
+        } finally {
+            if (tmpIs != null) {
+                try {
+                    tmpIs.close();
+                } catch (IOException ioe) {
+                    logger.error("Can not close temporal file stream", ioe.getMessage());
+                }
+            }
+        }
     }
 
     @EndpointFunction(name = "_mergeDocuments")
