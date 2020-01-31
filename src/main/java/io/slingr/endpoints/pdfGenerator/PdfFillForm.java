@@ -15,6 +15,8 @@ import io.slingr.endpoints.services.Files;
 import io.slingr.endpoints.utils.Json;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,6 +26,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class PdfFillForm {
+
+    private Logger logger = LoggerFactory.getLogger(PdfFillForm.class);
 
     private Map<String, String> fonts;
     private AppLogs appLogger;
@@ -35,37 +39,31 @@ public class PdfFillForm {
 
 
     public File fillForm(Files files, String pdfFileId, Json settings) throws IOException {
+        appLogger.info(String.format("Filling up form [%s]", pdfFileId));
 
         InputStream is = null;
         PdfDocument pdfDoc = null;
-
         try {
-
+            appLogger.info(String.format("Downloading form [%s]", pdfFileId));
             is = files.download(pdfFileId).getFile();
+            appLogger.info(String.format("Done downloading form [%s]", pdfFileId));
 
             File tmp = File.createTempFile("pdf-filled-" + new Date().getTime(), ".pdf");
-
             PdfWriter desPdf = new PdfWriter(tmp);
             PdfReader srcPdf = new PdfReader(is);
 
             pdfDoc = new PdfDocument(srcPdf, desPdf);
-
             PdfAcroForm form = PdfAcroForm.getAcroForm(pdfDoc, true);
             form.setGenerateAppearance(true);
 
             if (settings.contains("data")) {
                 Json settingsData = settings.json("data");
-
                 for (String givenFormField : settingsData.keys()) {
-
                     PdfFormField formField = form.getField(givenFormField);
                     if (formField != null) {
-
                         Json fieldSettings = settingsData.json(givenFormField);
                         if (fieldSettings != null) {
-
                             if (fieldSettings.contains("fontFileId")) {
-
                                 String fontFileId = fieldSettings.string("fontFileId");
                                 String font = fonts.get(fontFileId);
                                 if (font == null) {
@@ -90,7 +88,6 @@ public class PdfFillForm {
                                         }
                                     }
                                 }
-
                                 if (font != null) {
                                     PdfFont pdfFont = PdfFontFactory.createFont(font, PdfEncodings.IDENTITY_H);
                                     formField.setFont(pdfFont);
@@ -98,23 +95,18 @@ public class PdfFillForm {
                                     appLogger.error(String.format("Can not find font for %s", fontFileId));
                                 }
                             }
-
                             if (fieldSettings.contains("value")) {
                                 formField.setValue(fieldSettings.string("value"));
                             }
-
                             if (fieldSettings.contains("textSize")) {
                                 formField.setFontSize(fieldSettings.integer("textSize"));
                             }
-
                             if (fieldSettings.contains("backgroundColor")) {
                                 formField.setBackgroundColor(hex2Rgb(fieldSettings.string("backgroundColor")));
                             }
-
                             if (fieldSettings.contains("textColor")) {
                                 formField.setColor(hex2Rgb(fieldSettings.string("textColor")));
                             }
-
                             if (fieldSettings.contains("textAlignment")) {
                                 int textAlign = PdfFormField.ALIGN_LEFT;
                                 if ("CENTER".equals(fieldSettings.string("textAlignment"))) {
@@ -132,19 +124,19 @@ public class PdfFillForm {
                             formField.setReadOnly(readOnly);
 
                         }
-
                     } else {
                         appLogger.info(String.format("Can not find field %s for pdf file %s", givenFormField, pdfFileId));
                     }
                 }
             }
 
+            appLogger.info(String.format("Form [%s] was filled up successfully", pdfFileId));
 
             return tmp;
         } catch (Exception ex) {
-            appLogger.error("Can not fill pdf file. " + ex.getMessage());
+            appLogger.error(String.format("Can not fill pdf file [%s]", pdfFileId), ex);
+            logger.error(String.format("Can not fill pdf file [%s]", pdfFileId), ex);
         } finally {
-
             try {
                 if (is != null) {
                     is.close();
@@ -157,7 +149,6 @@ public class PdfFillForm {
                 appLogger.error("Can not close PDF document. ", ioe);
             }
         }
-
         return null;
 
     }
