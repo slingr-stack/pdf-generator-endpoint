@@ -134,7 +134,7 @@ public class PdfFillForm {
 
             return tmp;
         } catch (Exception ex) {
-            appLogger.error(String.format("Can not fill pdf file [%s]", pdfFileId), ex);
+            appLogger.error(String.format("Can not fill pdf file [%s]: " + ex.getMessage(), pdfFileId), ex);
             logger.error(String.format("Can not fill pdf file [%s]", pdfFileId), ex);
         } finally {
             try {
