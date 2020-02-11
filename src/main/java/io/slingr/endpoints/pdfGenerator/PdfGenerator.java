@@ -150,12 +150,12 @@ public class PdfGenerator extends Endpoint {
 
                 File temp = pdfFillForm.fillForm(files(), fileId, settings);
                 if (temp == null) {
-                    appLogger.info("Can generate filled form. Contact the support.");
+                    appLogger.info("Can not generate filled form. Contact the support.");
                     return;
                 }
 
                 String fileName = getFileName("pdf", settings);
-                appLogger.info("Uploading file");
+                appLogger.info(String.format("Uploading generated file [%s]", fileName));
                 tmpIs = new FileInputStream(temp);
 
                 Json fileJson = files().upload(fileName, tmpIs, "application/pdf");

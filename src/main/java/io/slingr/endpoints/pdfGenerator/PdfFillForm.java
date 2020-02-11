@@ -69,11 +69,13 @@ public class PdfFillForm {
                                 if (font == null) {
                                     InputStream fontIs = null;
                                     try {
+                                        appLogger.info(String.format("Downloading font [%s]", fontFileId));
                                         fontIs = files.download(fontFileId).getFile();
                                         File tmpFont = File.createTempFile("font", ".ttf");
                                         FileUtils.copyInputStreamToFile(fontIs, tmpFont);
                                         font = tmpFont.getPath();
                                         fonts.put(fontFileId, font);
+                                        appLogger.info(String.format("Done downloading font [%s]", fontFileId));
                                     } catch (Exception ex) {
                                         appLogger.error("Can not copy font. ", ex);
                                     } finally {
