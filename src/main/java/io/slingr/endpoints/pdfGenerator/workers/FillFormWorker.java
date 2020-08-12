@@ -19,20 +19,20 @@ public class FillFormWorker extends PdfWorker {
 
     private Logger logger = LoggerFactory.getLogger(FillFormWorker.class);
 
-    private Json data;
-
-    public FillFormWorker(Events events, Files files, AppLogs appLogger, FunctionRequest request, Json data) {
+    public FillFormWorker(Events events, Files files, AppLogs appLogger, FunctionRequest request) {
         super(events, files, appLogger, request);
-        this.data = data;
         this.pdfFillForm = new PdfFillForm(appLogger);
     }
 
     @Override
     public void run() {
-        fillForm(this.request, this.data);
+        fillForm(this.request);
     }
 
-    private void fillForm(FunctionRequest request, Json data) {
+    private void fillForm(FunctionRequest request) {
+
+        Json data = request.getJsonParams();
+
         String fileId = data.string("fileId");
         if (fileId == null) {
             appLogger.info("Can not find any pdf with null file id");
@@ -74,19 +74,16 @@ public class FillFormWorker extends PdfWorker {
 
             events.send("pdfResponse", res, request.getFunctionId());
         } finally {
-            if (tmpIs != null) {
-                try {
-                    if (tmpIs != null) {
-                        tmpIs.close();
-                    }
-                    if (temp != null) {
-                        temp.delete();
-                    }
-                } catch (IOException ioe) {
-                    logger.error("Can not close temporal file stream", ioe.getMessage());
+            try {
+                if (tmpIs != null) {
+                    tmpIs.close();
                 }
+                if (temp != null) {
+                    temp.delete();
+                }
+            } catch (IOException ioe) {
+                logger.error("Can not close temporal to generate file", ioe.getMessage());
             }
-
         }
     }
 }
