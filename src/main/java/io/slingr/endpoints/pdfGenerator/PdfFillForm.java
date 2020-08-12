@@ -43,12 +43,13 @@ public class PdfFillForm {
 
         InputStream is = null;
         PdfDocument pdfDoc = null;
+        File tmp = null;
         try {
             appLogger.info(String.format("Downloading form [%s]", pdfFileId));
             is = files.download(pdfFileId).getFile();
             appLogger.info(String.format("Done downloading form [%s]", pdfFileId));
 
-            File tmp = File.createTempFile("pdf-filled-" + new Date().getTime(), ".pdf");
+            tmp = File.createTempFile("pdf-filled-" + new Date().getTime(), ".pdf");
             PdfWriter desPdf = new PdfWriter(tmp);
             PdfReader srcPdf = new PdfReader(is);
 
@@ -146,7 +147,6 @@ public class PdfFillForm {
                 if (pdfDoc != null) {
                     pdfDoc.close();
                 }
-
             } catch (IOException ioe) {
                 appLogger.error("Can not close PDF document. ", ioe);
             }

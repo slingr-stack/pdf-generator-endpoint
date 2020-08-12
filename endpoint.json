@@ -123,5 +123,16 @@
         "functions.js"
     ],
     "listeners":[],
-    "configuration":[]
+    "configuration":[
+        {
+            "label": "Max thread pool",
+            "name": "maxThreadPool",
+            "defaultValue": "1",
+            "type": "text",
+            "required": true,
+            "typeOptions": {
+                "validation": "number"
+            }
+        }
+    ]
 }

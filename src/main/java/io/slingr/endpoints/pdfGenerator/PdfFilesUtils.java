@@ -1,7 +1,11 @@
 package io.slingr.endpoints.pdfGenerator;
 
 
+import io.slingr.endpoints.utils.Json;
+import org.apache.commons.lang.StringUtils;
+
 import java.io.*;
+import java.util.Date;
 
 public class PdfFilesUtils {
 
@@ -74,6 +78,14 @@ public class PdfFilesUtils {
 
         return destFolder + resourceName;
 
+    }
+
+    public static String getFileName(String prefix, Json settings) {
+        String fileName = prefix + "-" + new Date().getTime();
+        if (settings.contains("name") && StringUtils.isNotBlank(settings.string("name"))) {
+            fileName = settings.string("name");
+        }
+        return fileName;
     }
 
 }
