@@ -11,21 +11,21 @@
                 "label": "Default",
                 "memory": 384,
                 "offHeapMinFactor": 1.5,
-                "description": "Default configuration"
+                "description": "388 of memory and 1.5 off heap min factor. Default configuration"
             },
             {
                 "name": "bigFiles",
-                "label": "Big files",
+                "label": "Big size",
                 "memory": 512,
                 "offHeapMinFactor": 2,
-                "description": "Can process files up to 50MB"
+                "description": "512 of memory and 2 off heap min factor. Can process files up to 50MB"
             },
             {
                 "name": "hugeFiles",
-                "label": "Huge files",
+                "label": "Huge size",
                 "memory": 1024,
                 "offHeapMinFactor": 5,
-                "description": "Can process files up to 200MB"
+                "description": "1024 of memory and 5 off heap min factor. Can process files up to 200MB"
             }
         ],
         "allowMultipleInstances": true
@@ -123,5 +123,16 @@
         "functions.js"
     ],
     "listeners":[],
-    "configuration":[]
+    "configuration":[
+        {
+            "label": "Max thread pool",
+            "name": "maxThreadPool",
+            "defaultValue": "1",
+            "type": "text",
+            "required": true,
+            "typeOptions": {
+                "validation": "number"
+            }
+        }
+    ]
 }

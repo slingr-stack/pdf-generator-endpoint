@@ -43,12 +43,13 @@ public class PdfFillForm {
 
         InputStream is = null;
         PdfDocument pdfDoc = null;
+        File tmp = null;
         try {
             appLogger.info(String.format("Downloading form [%s]", pdfFileId));
             is = files.download(pdfFileId).getFile();
             appLogger.info(String.format("Done downloading form [%s]", pdfFileId));
 
-            File tmp = File.createTempFile("pdf-filled-" + new Date().getTime(), ".pdf");
+            tmp = File.createTempFile("pdf-filled-" + new Date().getTime(), ".pdf");
             PdfWriter desPdf = new PdfWriter(tmp);
             PdfReader srcPdf = new PdfReader(is);
 
@@ -61,68 +62,74 @@ public class PdfFillForm {
                 for (String givenFormField : settingsData.keys()) {
                     PdfFormField formField = form.getField(givenFormField);
                     if (formField != null) {
-                        Json fieldSettings = settingsData.json(givenFormField);
-                        if (fieldSettings != null) {
-                            if (fieldSettings.contains("fontFileId")) {
-                                String fontFileId = fieldSettings.string("fontFileId");
-                                String font = fonts.get(fontFileId);
-                                if (font == null) {
-                                    InputStream fontIs = null;
-                                    try {
-                                        fontIs = files.download(fontFileId).getFile();
-                                        File tmpFont = File.createTempFile("font", ".ttf");
-                                        FileUtils.copyInputStreamToFile(fontIs, tmpFont);
-                                        font = tmpFont.getPath();
-                                        fonts.put(fontFileId, font);
-                                    } catch (Exception ex) {
-                                        appLogger.error("Can not copy font. ", ex);
-                                    } finally {
-
+                        if (settingsData.object(givenFormField) instanceof String) {
+                            formField.setValue(settingsData.string(givenFormField));
+                        } else {
+                            Json fieldSettings = settingsData.json(givenFormField);
+                            if (fieldSettings != null) {
+                                if (fieldSettings.contains("fontFileId")) {
+                                    String fontFileId = fieldSettings.string("fontFileId");
+                                    String font = fonts.get(fontFileId);
+                                    if (font == null) {
+                                        InputStream fontIs = null;
                                         try {
-                                            if (fontIs != null) {
-                                                fontIs.close();
-                                            }
+                                            appLogger.info(String.format("Downloading font [%s]", fontFileId));
+                                            fontIs = files.download(fontFileId).getFile();
+                                            File tmpFont = File.createTempFile("font", ".ttf");
+                                            FileUtils.copyInputStreamToFile(fontIs, tmpFont);
+                                            font = tmpFont.getPath();
+                                            fonts.put(fontFileId, font);
+                                            appLogger.info(String.format("Done downloading font [%s]", fontFileId));
+                                        } catch (Exception ex) {
+                                            appLogger.error("Can not copy font. ", ex);
+                                        } finally {
 
-                                        } catch (IOException ioe) {
-                                            appLogger.error("Can not close font. ", ioe);
+                                            try {
+                                                if (fontIs != null) {
+                                                    fontIs.close();
+                                                }
+
+                                            } catch (IOException ioe) {
+                                                appLogger.error("Can not close font. ", ioe);
+                                            }
                                         }
                                     }
+                                    if (font != null) {
+                                        PdfFont pdfFont = PdfFontFactory.createFont(font, PdfEncodings.IDENTITY_H);
+                                        formField.setFont(pdfFont);
+                                    } else {
+                                        appLogger.error(String.format("Can not find font for %s", fontFileId));
+                                    }
                                 }
-                                if (font != null) {
-                                    PdfFont pdfFont = PdfFontFactory.createFont(font, PdfEncodings.IDENTITY_H);
-                                    formField.setFont(pdfFont);
-                                } else {
-                                    appLogger.error(String.format("Can not find font for %s", fontFileId));
+                                if (fieldSettings.contains("value")) {
+                                    formField.setValue(fieldSettings.string("value"));
                                 }
-                            }
-                            if (fieldSettings.contains("value")) {
-                                formField.setValue(fieldSettings.string("value"));
-                            }
-                            if (fieldSettings.contains("textSize")) {
-                                formField.setFontSize(fieldSettings.integer("textSize"));
-                            }
-                            if (fieldSettings.contains("backgroundColor")) {
-                                formField.setBackgroundColor(hex2Rgb(fieldSettings.string("backgroundColor")));
-                            }
-                            if (fieldSettings.contains("textColor")) {
-                                formField.setColor(hex2Rgb(fieldSettings.string("textColor")));
-                            }
-                            if (fieldSettings.contains("textAlignment")) {
-                                int textAlign = PdfFormField.ALIGN_LEFT;
-                                if ("CENTER".equals(fieldSettings.string("textAlignment"))) {
-                                    textAlign = PdfFormField.ALIGN_CENTER;
-                                } else if ("RIGHT".equals(fieldSettings.string("textAlignment"))) {
-                                    textAlign = PdfFormField.ALIGN_RIGHT;
+                                if (fieldSettings.contains("textSize")) {
+                                    formField.setFontSize(fieldSettings.integer("textSize"));
                                 }
-                                formField.setJustification(textAlign);
-                            }
+                                if (fieldSettings.contains("backgroundColor")) {
+                                    formField.setBackgroundColor(hex2Rgb(fieldSettings.string("backgroundColor")));
+                                }
+                                if (fieldSettings.contains("textColor")) {
+                                    formField.setColor(hex2Rgb(fieldSettings.string("textColor")));
+                                }
+                                if (fieldSettings.contains("textAlignment")) {
+                                    int textAlign = PdfFormField.ALIGN_LEFT;
+                                    if ("CENTER".equals(fieldSettings.string("textAlignment"))) {
+                                        textAlign = PdfFormField.ALIGN_CENTER;
+                                    } else if ("RIGHT".equals(fieldSettings.string("textAlignment"))) {
+                                        textAlign = PdfFormField.ALIGN_RIGHT;
+                                    }
+                                    formField.setJustification(textAlign);
+                                }
 
-                            boolean readOnly = false;
-                            if (fieldSettings.contains("readOnly")) {
-                                readOnly = fieldSettings.bool("readOnly");
-                            }
-                            formField.setReadOnly(readOnly);
+                                boolean readOnly = false;
+                                if (fieldSettings.contains("readOnly")) {
+                                    readOnly = fieldSettings.bool("readOnly");
+                                }
+                                formField.setReadOnly(readOnly);
 
+                            }
                         }
                     } else {
                         appLogger.info(String.format("Can not find field %s for pdf file %s", givenFormField, pdfFileId));
@@ -134,7 +141,7 @@ public class PdfFillForm {
 
             return tmp;
         } catch (Exception ex) {
-            appLogger.error(String.format("Can not fill pdf file [%s]", pdfFileId), ex);
+            appLogger.error(String.format("Can not fill pdf file [%s]: " + ex.getMessage(), pdfFileId), ex);
             logger.error(String.format("Can not fill pdf file [%s]", pdfFileId), ex);
         } finally {
             try {
@@ -144,7 +151,6 @@ public class PdfFillForm {
                 if (pdfDoc != null) {
                     pdfDoc.close();
                 }
-
             } catch (IOException ioe) {
                 appLogger.error("Can not close PDF document. ", ioe);
             }
