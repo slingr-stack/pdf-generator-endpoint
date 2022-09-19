@@ -490,6 +490,63 @@ app.endpoints.pdfGenerator.addImages(fileId, settings, {record: record}, {
 });
 ```
 
+## Convert PDF to images
+
+Given a list of pdf ids an object is returned containing for each id, a list of the pages of that file converted
+to images.
+
+**fileIds:** this is a list of the ids of the pdfs. Required.
+
+**dpi:** represents the number of pixels per inch and therefore the resolution we want
+the converted pdf images to have. This can't be greater than 600. Required.
+
+
+```js
+
+app.endpoints.pdfGenerator.convertPdfToImages(['8ko8a06ca0be213068b65dee', '89osa06ca0be513068b2fgcg'], 72, { record: record }, {
+    'pdfResponse': function(res, resData) {
+  
+        var data = res.data;
+        var document = resData.record;
+        
+        if(data && data.status == "ok") {
+            
+            var files = [];
+          
+            // Here we iterate through the different pdfs ids
+            for(var id in data.imagesIds) {
+              // We can then iterate over the pages of the pdf that were converted
+              data.imagesIds[id].forEach(function(imageId) {
+                files.push(imageId);
+              }
+            }
+          
+          document.field('files').val(files); // where file is multi value file type
+          sys.data.save(document);
+      }
+        
+    }
+});
+
+// This is an example of the response
+{
+  "status": "ok",
+  "imagesIds": {
+      "8ko8a06ca0be213068b65dee": [
+         "632493fa17170858125a6e1a",
+         "632493fc17170858125a6e1d"
+      ],
+      "89osa06ca0be513068b2fgcg": [
+         "6324940517170858125a6e21",
+         "6324940817170858125a6e24",
+         "6324940b17170858125a6e27",
+         "6324940d17170858125a6e2a"
+      ]
+   }
+}
+
+```
+
 ## About SLINGR
 
 SLINGR is a low-code rapid application development platform that accelerates development, with robust architecture for integrations and executing custom workflows and automation.
