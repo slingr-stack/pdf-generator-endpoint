@@ -12,13 +12,21 @@ import io.slingr.endpoints.framework.annotations.EndpointProperty;
 import io.slingr.endpoints.framework.annotations.SlingrEndpoint;
 import io.slingr.endpoints.pdfGenerator.workers.*;
 import io.slingr.endpoints.services.AppLogs;
+import io.slingr.endpoints.services.rest.DownloadedFile;
 import io.slingr.endpoints.utils.Json;
 import io.slingr.endpoints.ws.exchange.FunctionRequest;
 import org.apache.commons.lang.StringUtils;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.ImageType;
+import org.apache.pdfbox.rendering.PDFRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
@@ -214,6 +222,55 @@ public class PdfGenerator extends Endpoint {
         AddImagesWorker worker = new AddImagesWorker(events(), files(), appLogger, request);
         this.executorService.submit(worker);
         return Json.map();
+    }
+
+    @EndpointFunction(name = "_convertPdfToImages")
+    public Json convertPdfToImages(FunctionRequest request) throws IOException {
+        Json resp = Json.map();
+        Json data = request.getJsonParams();
+        Json settings = data.json("settings");
+        List<Object> fileIds = data.json("fileIds").toList();
+        Integer dpi = data.integer("dpi");
+        if (dpi > 600) {
+            throw EndpointException.permanent(ErrorCode.ARGUMENT, "DPI cannot be greater than 600.");
+        }
+        Executors.newSingleThreadScheduledExecutor().execute(() -> {
+            logger.info("Executing function in a separated thread");
+            Json convertedImages = Json.map();
+            for (Object pdfId : fileIds.toArray()) {
+                DownloadedFile file = files().download(pdfId.toString());
+                List<String> ids = new ArrayList<>();
+                try {
+                    logger.info("Converting PDF to images");
+                    PDDocument document = PDDocument.load(file.getFile());
+                    PDFRenderer pdfRenderer = new PDFRenderer(document);
+                    for (int page = 0; page < document.getNumberOfPages(); ++page) {
+                        BufferedImage bim = pdfRenderer.renderImageWithDPI(page, dpi, ImageType.RGB);
+                        File tempFile = File.createTempFile("image-pdf", ".jpeg");
+                        ImageIO.write(bim, "JPEG", tempFile);
+                        FileInputStream in = new FileInputStream(tempFile);
+                        String fileName = tempFile.getName();
+                        Json response = files().upload(fileName, in, "image/jpeg");
+                        ids.add(response.string("fileId"));
+                        in.close();
+                        tempFile.delete();
+                    }
+                    logger.info("PDF converted successfully to images");
+                    convertedImages.set(pdfId.toString(), ids);
+                    document.close();
+                } catch (IOException e) {
+                    appLogger.error("Can not convert PDF, I/O exception", e);
+                    logger.error("Can not convert PDF, I/O exception", e);
+                    throw EndpointException.permanent(ErrorCode.GENERAL, "Failed to convert pdf to images", e);
+                }
+            }
+            resp.set("status", "ok");
+            resp.set("imagesIds", convertedImages);
+            resp.set("config", settings);
+            events().send("pdfResponse", resp, request.getFunctionId());
+        });
+
+        return Json.map().set("status", "ok");
     }
 
     private final ReentrantLock pdfLock = new ReentrantLock();

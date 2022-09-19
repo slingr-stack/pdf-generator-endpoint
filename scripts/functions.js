@@ -83,3 +83,12 @@ endpoint.addImages = function(fileId, settings, callbackData, callbacks) {
     };
     return endpoint._addImages(options, callbackData, callbacks);
 };
+
+endpoint.convertPdfToImages = function(fileIds, dpi, settings, callbackData, callbacks) {
+    var options = {
+        fileIds: fileIds,
+        dpi: dpi,
+        settings: settings || {}
+    }
+    return endpoint._convertPdfToImages(options, callbackData, callbacks)
+}

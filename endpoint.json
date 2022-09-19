@@ -110,6 +110,16 @@
                     "maxExpectedResponses": 1
                 }
             ]
+        },
+        {
+            "label": "Convert Pdf To Images",
+            "name": "_convertPdfToImages",
+            "callbacks": [
+                {
+                    "name": "pdfResponse",
+                    "maxExpectedResponses": 1
+                }
+            ]
         }
     ],
     "scripts":[
