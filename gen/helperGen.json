@@ -1,0 +1,69 @@
+{
+  "fileName": "functions",
+  "endpointName": "pdf-generator",
+  "apiDescriptors": [
+    {
+      "prefix": "",
+      "suffix": "",
+      "method": "NONE",
+      "url": "/generatePdf/:template/:data/:settings",
+      "acceptsCallbacks": true
+    },
+    {
+      "prefix": "",
+      "suffix": "",
+      "method": "NONE",
+      "url": "/mergeDocuments/:documents",
+      "acceptsCallbacks": true
+    },
+    {
+      "prefix": "",
+      "suffix": "",
+      "method": "NONE",
+      "url": "/splitDocument/:fileId/:interval",
+      "acceptsCallbacks": true
+    },
+    {
+      "prefix": "",
+      "suffix": "",
+      "method": "NONE",
+      "url": "/replaceHeaderAndFooter/:fileId/:settings",
+      "acceptsCallbacks": true
+    },
+    {
+      "prefix": "",
+      "suffix": "",
+      "method": "NONE",
+      "url": "/fillForm/:fileId/:settings",
+      "acceptsCallbacks": true
+    },
+    {
+      "prefix": "",
+      "suffix": "",
+      "method": "NONE",
+      "url": "/fillFormSync/:fileId/:settings",
+      "acceptsCallbacks": true
+    },
+    {
+      "prefix": "",
+      "suffix": "",
+      "method": "NONE",
+      "url": "/replaceImages/:fileId/:settings",
+      "acceptsCallbacks": true
+    },
+    {
+      "prefix": "",
+      "suffix": "",
+      "method": "NONE",
+      "url": "/addImages/:fileId/:settings",
+      "acceptsCallbacks": true
+    },
+    {
+      "prefix": "",
+      "suffix": "",
+      "method": "NONE",
+      "url": "/convertPdfToImages/:fileIds/:dpi/:settings",
+      "acceptsCallbacks": true
+    }
+  ]
+}
