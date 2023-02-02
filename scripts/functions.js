@@ -31,7 +31,7 @@ endpoint.generatePdf = function(template, data, settings, callbackData, callback
         settings = {};
     }
     if (!template || !data) {
-        sys.logs.error('Invalid argument received. This helper should receive the following parameters as non-empty strings: [template,data,settings].');
+        sys.logs.error('Invalid argument received. This helper should receive the following parameters as non-empty strings: [template,data].');
         return;
     }
     sys.logs.debug('[pdf-generator] from: generatePdf');
@@ -77,7 +77,7 @@ endpoint.replaceHeaderAndFooter = function(fileId, settings, callbackData, callb
 
 endpoint.fillForm = function(fileId, settings, callbackData, callbacks) {
     if (!fileId) {
-        sys.logs.error('Invalid argument received. This helper should receive the following parameters as non-empty strings: [fileId,settings].');
+        sys.logs.error('Invalid argument received. This helper should receive the following parameters as non-empty strings: [fileId].');
         return;
     }
     sys.logs.debug('[pdf-generator] from: fillForm');
@@ -87,7 +87,7 @@ endpoint.fillForm = function(fileId, settings, callbackData, callbacks) {
 
 endpoint.fillFormSync = function(fileId, settings, callbackData, callbacks) {
     if (!fileId) {
-        sys.logs.error('Invalid argument received. This helper should receive the following parameters as non-empty strings: [fileId,settings].');
+        sys.logs.error('Invalid argument received. This helper should receive the following parameters as non-empty strings: [fileId].');
         return;
     }
     sys.logs.debug('[pdf-generator] from: fillFormSync');
@@ -97,7 +97,7 @@ endpoint.fillFormSync = function(fileId, settings, callbackData, callbacks) {
 
 endpoint.replaceImages = function(fileId, settings, callbackData, callbacks) {
     if (!fileId) {
-        sys.logs.error('Invalid argument received. This helper should receive the following parameters as non-empty strings: [fileId,settings].');
+        sys.logs.error('Invalid argument received. This helper should receive the following parameters as non-empty strings: [fileId].');
         return;
     }
     sys.logs.debug('[pdf-generator] from: replaceImages');
@@ -107,7 +107,7 @@ endpoint.replaceImages = function(fileId, settings, callbackData, callbacks) {
 
 endpoint.addImages = function(fileId, settings, callbackData, callbacks) {
     if (!fileId) {
-        sys.logs.error('Invalid argument received. This helper should receive the following parameters as non-empty strings: [fileId,settings].');
+        sys.logs.error('Invalid argument received. This helper should receive the following parameters as non-empty strings: [fileId].');
         return;
     }
     sys.logs.debug('[pdf-generator] from: addImages');
@@ -117,7 +117,7 @@ endpoint.addImages = function(fileId, settings, callbackData, callbacks) {
 
 endpoint.convertPdfToImages = function(fileIds, dpi, settings, callbackData, callbacks) {
     if (!fileIds || !dpi) {
-        sys.logs.error('Invalid argument received. This helper should receive the following parameters as non-empty strings: [fileIds,dpi,settings].');
+        sys.logs.error('Invalid argument received. This helper should receive the following parameters as non-empty strings: [fileIds,dpi].');
         return;
     }
     sys.logs.debug('[pdf-generator] from: convertPdfToImages');

@@ -1,6 +1,6 @@
 {
   "label": "API call to pdf-generator",
-  "name": "apiCall",
+  "name": "apiCallPdfGenerator",
   "category": "integrations",
   "description": "This flow step will send generic request",
   "inputs": [
