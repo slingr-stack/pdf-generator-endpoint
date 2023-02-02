@@ -17,7 +17,7 @@
  * {number} readTimeout, Connect timeout interval, in milliseconds.
  * @param {object} stepConfig.context {object} context
  */
-step.apiCall = function (stepConfig) {
+step.apiCallPdfGenerator = function (stepConfig) {
 
 	var headers = isObject(stepConfig.inputs.headers) ? stepConfig.inputs.headers : stringToObject(stepConfig.inputs.headers)
 	var params = isObject(stepConfig.inputs.params) ? stepConfig.inputs.params : stringToObject(stepConfig.inputs.params)
@@ -68,23 +68,23 @@ sys.logs.error(stepConfig);
 
 	switch (stepConfig.inputs.action) {
         case "app.endpoints.pdf-generator.generatePdf(template, data, settings, callbackData, callbacks)":
-            return app.endpoints.pdf-generator.generatePdf(template, data, settings, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
+            return app.endpoints.pdfGenerator.generatePdf(template, data, settings, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
         case "app.endpoints.pdf-generator.mergeDocuments(documents, callbackData, callbacks)":
-            return app.endpoints.pdf-generator.mergeDocuments(documents, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
+            return app.endpoints.pdfGenerator.mergeDocuments(documents, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
         case "app.endpoints.pdf-generator.splitDocument(fileId, interval, callbackData, callbacks)":
-            return app.endpoints.pdf-generator.splitDocument(fileId, interval, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
+            return app.endpoints.pdfGenerator.splitDocument(fileId, interval, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
         case "app.endpoints.pdf-generator.replaceHeaderAndFooter(fileId, settings, callbackData, callbacks)":
-            return app.endpoints.pdf-generator.replaceHeaderAndFooter(fileId, settings, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
+            return app.endpoints.pdfGenerator.replaceHeaderAndFooter(fileId, settings, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
         case "app.endpoints.pdf-generator.fillForm(fileId, settings, callbackData, callbacks)":
-            return app.endpoints.pdf-generator.fillForm(fileId, settings, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
+            return app.endpoints.pdfGenerator.fillForm(fileId, settings, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
         case "app.endpoints.pdf-generator.fillFormSync(fileId, settings, callbackData, callbacks)":
-            return app.endpoints.pdf-generator.fillFormSync(fileId, settings, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
+            return app.endpoints.pdfGenerator.fillFormSync(fileId, settings, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
         case "app.endpoints.pdf-generator.replaceImages(fileId, settings, callbackData, callbacks)":
-            return app.endpoints.pdf-generator.replaceImages(fileId, settings, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
+            return app.endpoints.pdfGenerator.replaceImages(fileId, settings, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
         case "app.endpoints.pdf-generator.addImages(fileId, settings, callbackData, callbacks)":
-            return app.endpoints.pdf-generator.addImages(fileId, settings, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
+            return app.endpoints.pdfGenerator.addImages(fileId, settings, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
         case "app.endpoints.pdf-generator.convertPdfToImages(fileIds, dpi, settings, callbackData, callbacks)":
-            return app.endpoints.pdf-generator.convertPdfToImages(fileIds, dpi, settings, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
+            return app.endpoints.pdfGenerator.convertPdfToImages(fileIds, dpi, settings, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
         default:
             return null;
     }
