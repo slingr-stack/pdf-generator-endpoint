@@ -8,9 +8,6 @@
       "label": "Action",
       "name": "action",
       "type": "dropDown",
-      "required": "true",
-      "description": "Select action",
-      "multiplicity": "one",
       "options": {
         "possibleValues": [
           {

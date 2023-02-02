@@ -27,7 +27,7 @@ step.apiCallPdfGenerator = function (stepConfig) {
 		eval("stepConfig.inputs.callbacks = {" + stepConfig.inputs.events + " : function(event, callbackData) {" + stepConfig.inputs.callbacks + "}}") : stepConfig.inputs.callbacks;
 
 	stepConfig.inputs.callbackData = stepConfig.inputs.callbackData ? {record:stepConfig.inputs.callbackData} : stepConfig.inputs.callbackData;
-sys.logs.error(stepConfig);
+
 	var options = {
 		path: parse(stepConfig.inputs.url.urlValue, stepConfig.inputs.url.paramsValue),
 		params:params,
@@ -68,23 +68,23 @@ sys.logs.error(stepConfig);
 
 	switch (stepConfig.inputs.action) {
         case "app.endpoints.pdf-generator.generatePdf(template, data, settings, callbackData, callbacks)":
-            return app.endpoints.pdfGenerator.generatePdf(template, data, settings, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
+            return app.endpoints.pdfGenerator.generatePdf(params['template'], params['data'], params[' settings'], stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
         case "app.endpoints.pdf-generator.mergeDocuments(documents, callbackData, callbacks)":
-            return app.endpoints.pdfGenerator.mergeDocuments(documents, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
+            return app.endpoints.pdfGenerator.mergeDocuments(params['documents'], stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
         case "app.endpoints.pdf-generator.splitDocument(fileId, interval, callbackData, callbacks)":
-            return app.endpoints.pdfGenerator.splitDocument(fileId, interval, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
+            return app.endpoints.pdfGenerator.splitDocument(params['fileId'], params['interval'], stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
         case "app.endpoints.pdf-generator.replaceHeaderAndFooter(fileId, settings, callbackData, callbacks)":
-            return app.endpoints.pdfGenerator.replaceHeaderAndFooter(fileId, settings, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
+            return app.endpoints.pdfGenerator.replaceHeaderAndFooter(params['fileId'], params['settings'], stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
         case "app.endpoints.pdf-generator.fillForm(fileId, settings, callbackData, callbacks)":
-            return app.endpoints.pdfGenerator.fillForm(fileId, settings, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
+            return app.endpoints.pdfGenerator.fillForm(params['fileId'], params['settings'], stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
         case "app.endpoints.pdf-generator.fillFormSync(fileId, settings, callbackData, callbacks)":
-            return app.endpoints.pdfGenerator.fillFormSync(fileId, settings, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
+            return app.endpoints.pdfGenerator.fillFormSync(params['fileId'], params['settings'], stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
         case "app.endpoints.pdf-generator.replaceImages(fileId, settings, callbackData, callbacks)":
-            return app.endpoints.pdfGenerator.replaceImages(fileId, settings, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
+            return app.endpoints.pdfGenerator.replaceImages(params['fileId'], params['settings'], stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
         case "app.endpoints.pdf-generator.addImages(fileId, settings, callbackData, callbacks)":
-            return app.endpoints.pdfGenerator.addImages(fileId, settings, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
+            return app.endpoints.pdfGenerator.addImages(params['fileId'], params['settings'], stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
         case "app.endpoints.pdf-generator.convertPdfToImages(fileIds, dpi, settings, callbackData, callbacks)":
-            return app.endpoints.pdfGenerator.convertPdfToImages(fileIds, dpi, settings, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
+            return app.endpoints.pdfGenerator.convertPdfToImages(params['fileIds'], params['dpi'], params[' settings'], stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
         default:
             return null;
     }

@@ -9,7 +9,7 @@ The Javascript API of the pdf-generator endpoint has three pieces:
 ## HTTP requests
 You can make `` requests to the [pdf-generator API](API_URL_HERE) like this:
 ```javascript
-var response = app.endpoints.pdf-generator.mergeDocuments(documents)
+var response = app.endpoints.pdf-generator.fillForm(fileId, settings)
 ```
 
 Please take a look at the documentation of the [HTTP endpoint](https://github.com/slingr-stack/http-endpoint#javascript-api)
@@ -70,10 +70,10 @@ app.endpoints.pdf-generator.convertPdfToImages(fileIds, dpi, settings, callbackD
 ---
 
 </details>
-    
+
 ## Flow Step
 
-As an alternative option to using scripts, you can make use of Flows and Flow Steps specifically created for the endpoint: 
+As an alternative option to using scripts, you can make use of Flows and Flow Steps specifically created for the endpoint:
 <details>
     <summary>Click here to see the Flow Steps</summary>
 
