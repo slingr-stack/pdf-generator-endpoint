@@ -7,12 +7,14 @@
     {
       "label": "Template",
       "name": "template",
+      "required": "true",
       "description": "HTML template to be converted to PDF",
-      "type": "text"
+      "type": "script",
     },
     {
       "label": "Data",
       "name": "data",
+      "required": "true",
       "description": "Data to be used in the template",
       "type": "json"
     },
