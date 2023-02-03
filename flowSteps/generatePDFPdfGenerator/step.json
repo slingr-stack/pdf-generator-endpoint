@@ -1,0 +1,56 @@
+{
+  "label": "Generate PDF (pdf-generator)",
+  "name": "generatePDFPdfGenerator",
+  "category": "integrations",
+  "description": "This flow step will allow you to generate PDFs using the pdf-generator service",
+  "inputs": [
+    {
+      "label": "Template",
+      "name": "template",
+      "description": "HTML template to be converted to PDF",
+      "type": "text"
+    },
+    {
+      "label": "Data",
+      "name": "data",
+      "description": "Data to be used in the template",
+      "type": "json"
+    },
+    {
+      "label": "Settings",
+      "name": "settings",
+      "description": "Settings to be used to convert the template to PDF",
+      "type": "json"
+    },
+    {
+      "label": "Callback Data",
+      "name": "callbackData",
+      "type": "text",
+      "description": "This is an object you can send that you will get back when the function is processed",
+      "visibility": "config.events",
+      "options": {
+        "representation": "textArea",
+        "allowContextSelector": "true"
+      }
+    },
+    {
+      "label": "Callbacks",
+      "name": "callbacks",
+      "type": "script",
+      "description": "This is a map where you can listener for different function",
+      "visibility": "config.events",
+      "options": {
+        "allowContextSelector": "false",
+        "parameters": ["event","callbackData"]
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "label": "Response",
+      "name": "response",
+      "type": "object",
+      "description": "The response to external URL"
+    }
+  ]
+}

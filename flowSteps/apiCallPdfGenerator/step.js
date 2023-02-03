@@ -39,10 +39,10 @@ step.apiCallPdfGenerator = function (stepConfig) {
 			method: ""
 		},
 		action: stepConfig.inputs.action || ""
-	}
+	};
 
-	inputs.headers = isObject(inputs.headers) ? inputs.headers : stringToObject(inputs.headers)
-	inputs.params = isObject(inputs.params) ? inputs.params : stringToObject(inputs.params)
+	inputs.headers = isObject(inputs.headers) ? inputs.headers : stringToObject(inputs.headers);
+	inputs.params = isObject(inputs.params) ? inputs.params : stringToObject(inputs.params);
 	inputs.body = isObject(inputs.body) ? inputs.body : JSON.parse(inputs.body);
 
 	inputs.callbacks = inputs.callbacks ?
@@ -64,7 +64,7 @@ step.apiCallPdfGenerator = function (stepConfig) {
 		connectionTimeout: inputs.connectionTimeout,
 		readTimeout: inputs.readTimeout,
 		defaultCallback: !!inputs.events
-	}
+	};
 
 	switch (inputs.url.method.toLowerCase()) {
 		case 'get':
