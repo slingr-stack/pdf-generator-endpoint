@@ -9,7 +9,7 @@
       "name": "template",
       "required": "true",
       "description": "HTML template to be converted to PDF",
-      "type": "text",
+      "type": "text"
     },
     {
       "label": "Data",
