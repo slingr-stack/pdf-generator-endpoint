@@ -29,7 +29,7 @@ step.apiCallPdfGenerator = function (stepConfig) {
 	stepConfig.inputs.callbackData = stepConfig.inputs.callbackData ? {record:stepConfig.inputs.callbackData} : stepConfig.inputs.callbackData;
 
 	var options = {
-		path: parse(stepConfig.inputs.url.urlValue, stepConfig.inputs.url.paramsValue),
+		path: parse(stepConfig.inputs['url']['urlValue'], stepConfig.inputs['url']['paramsValue']),
 		params:params,
 		headers:headers,
 		body: body,
@@ -43,7 +43,7 @@ step.apiCallPdfGenerator = function (stepConfig) {
 		defaultCallback: !!stepConfig.inputs.events
 	}
 
-	switch (stepConfig.inputs.url.method.toLowerCase()) {
+	switch (stepConfig.inputs['url']['method'].toLowerCase()) {
 		case 'get':
 			return endpoint._get(options, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
 		case 'post':
