@@ -16,79 +16,99 @@
  * {number} connectionTimeout, Read timeout interval, in milliseconds.
  * {number} readTimeout, Connect timeout interval, in milliseconds.
  * @param {object} stepConfig.context {object} context
+ * @param {object} stepConfig.output {object} output
  */
 step.apiCallPdfGenerator = function (stepConfig) {
 
-	var headers = isObject(stepConfig.inputs.headers) ? stepConfig.inputs.headers : stringToObject(stepConfig.inputs.headers)
-	var params = isObject(stepConfig.inputs.params) ? stepConfig.inputs.params : stringToObject(stepConfig.inputs.params)
-	var body = isObject(stepConfig.inputs.body) ? stepConfig.inputs.body : JSON.parse(stepConfig.inputs.body);
+	var inputs = {
+		headers: stepConfig.inputs.headers || [],
+		params: stepConfig.inputs.params || [],
+		body: stepConfig.inputs.body || {},
+		callbackData: stepConfig.inputs.callbackData || "",
+		callbacks: stepConfig.inputs.callbacks || "",
+		followRedirects: stepConfig.inputs.followRedirects || false,
+		download: stepConfig.inputs.download || false,
+		fileName: stepConfig.inputs.fileName || "",
+		fullResponse: stepConfig.inputs.fullResponse || false,
+		connectionTimeout: stepConfig.inputs.connectionTimeout || 5000,
+		readTimeout: stepConfig.inputs.readTimeout || 60000,
+		events: stepConfig.inputs.events || "",
+		url: stepConfig.inputs.url || {
+			urlValue: "",
+			paramsValue: [],
+			method: ""
+		},
+		action: stepConfig.inputs.action || ""
+	}
 
-	stepConfig.inputs.callbacks = stepConfig.inputs.callbacks ?
-		eval("stepConfig.inputs.callbacks = {" + stepConfig.inputs.events + " : function(event, callbackData) {" + stepConfig.inputs.callbacks + "}}") : stepConfig.inputs.callbacks;
+	inputs.headers = isObject(inputs.headers) ? inputs.headers : stringToObject(inputs.headers)
+	inputs.params = isObject(inputs.params) ? inputs.params : stringToObject(inputs.params)
+	inputs.body = isObject(inputs.body) ? inputs.body : JSON.parse(inputs.body);
 
-	stepConfig.inputs.callbackData = stepConfig.inputs.callbackData ? {record:stepConfig.inputs.callbackData} : stepConfig.inputs.callbackData;
+	inputs.callbacks = inputs.callbacks ?
+		eval("inputs.callbacks = {" + inputs.events + " : function(event, callbackData) {" + inputs.callbacks + "}}") :
+		inputs.callbacks;
+
+	inputs.callbackData = inputs.callbackData ? {record: inputs.callbackData} : inputs.callbackData;
 
 	var options = {
-		path: parse(stepConfig.inputs['url']['urlValue'] !== undefined ? stepConfig.inputs['url']['urlValue'] : '', stepConfig.inputs['url']['paramsValue'] !== undefined ? stepConfig.inputs['url']['paramsValue'] : []),
-		params:params,
-		headers:headers,
-		body: body,
-		followRedirects : stepConfig.inputs.followRedirects,
-		forceDownload : stepConfig.inputs.events === "fileDownloaded" ? true : stepConfig.inputs.download,
-		downloadSync : stepConfig.inputs.events === "fileDownloaded" ? false : stepConfig.inputs.download,
-		fileName: stepConfig.inputs.fileName,
-		fullResponse : stepConfig.inputs.fullResponse,
-		connectionTimeout: stepConfig.inputs.connectionTimeout,
-		readTimeout: stepConfig.inputs.readTimeout,
-		defaultCallback: !!stepConfig.inputs.events
+		path: parse(inputs.url.urlValue, inputs.url.paramsValue),
+		params: inputs.params,
+		headers: inputs.headers,
+		body: inputs.body,
+		followRedirects : inputs.followRedirects,
+		forceDownload : inputs.events === "fileDownloaded" ? true : inputs.download,
+		downloadSync : inputs.events === "fileDownloaded" ? false : inputs.download,
+		fileName: inputs.fileName,
+		fullResponse : inputs.fullResponse,
+		connectionTimeout: inputs.connectionTimeout,
+		readTimeout: inputs.readTimeout,
+		defaultCallback: !!inputs.events
 	}
 
-	switch (stepConfig.inputs['url']['method'].toLowerCase() !== undefined ? stepConfig.inputs['url']['method'].toLowerCase() : '') {
+	switch (inputs.url.method.toLowerCase()) {
 		case 'get':
-			return endpoint._get(options, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
+			return endpoint._get(options, inputs.callbackData, inputs.callbacks);
 		case 'post':
-			return endpoint._post(options, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
+			return endpoint._post(options, inputs.callbackData, inputs.callbacks);
 		case 'delete':
-			return endpoint._delete(options, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
+			return endpoint._delete(options, inputs.callbackData, inputs.callbacks);
 		case 'put':
-			return endpoint._put(options, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
+			return endpoint._put(options, inputs.callbackData, inputs.callbacks);
 		case 'connect':
-			return endpoint._connect(options, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
+			return endpoint._connect(options, inputs.callbackData, inputs.callbacks);
 		case 'head':
-			return endpoint._head(options, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
+			return endpoint._head(options, inputs.callbackData, inputs.callbacks);
 		case 'options':
-			return endpoint._options(options, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
+			return endpoint._options(options, inputs.callbackData, inputs.callbacks);
 		case 'patch':
-			return endpoint._patch(options, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
+			return endpoint._patch(options, inputs.callbackData, inputs.callbacks);
 		case 'trace':
-			return endpoint._trace(options, stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
-		default:
-			return null;
+			return endpoint._trace(options, inputs.callbackData, inputs.callbacks);
 	}
 
-	switch (stepConfig.inputs.action) {
-        case "app.endpoints.pdf-generator.generatePdf(template, data, settings, callbackData, callbacks)":
-            return app.endpoints.pdfGenerator.generatePdf(params['template'], params['data'], params[' settings'], stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
-        case "app.endpoints.pdf-generator.mergeDocuments(documents, callbackData, callbacks)":
-            return app.endpoints.pdfGenerator.mergeDocuments(params['documents'], stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
-        case "app.endpoints.pdf-generator.splitDocument(fileId, interval, callbackData, callbacks)":
-            return app.endpoints.pdfGenerator.splitDocument(params['fileId'], params['interval'], stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
-        case "app.endpoints.pdf-generator.replaceHeaderAndFooter(fileId, settings, callbackData, callbacks)":
-            return app.endpoints.pdfGenerator.replaceHeaderAndFooter(params['fileId'], params['settings'], stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
-        case "app.endpoints.pdf-generator.fillForm(fileId, settings, callbackData, callbacks)":
-            return app.endpoints.pdfGenerator.fillForm(params['fileId'], params['settings'], stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
-        case "app.endpoints.pdf-generator.fillFormSync(fileId, settings, callbackData, callbacks)":
-            return app.endpoints.pdfGenerator.fillFormSync(params['fileId'], params['settings'], stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
-        case "app.endpoints.pdf-generator.replaceImages(fileId, settings, callbackData, callbacks)":
-            return app.endpoints.pdfGenerator.replaceImages(params['fileId'], params['settings'], stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
-        case "app.endpoints.pdf-generator.addImages(fileId, settings, callbackData, callbacks)":
-            return app.endpoints.pdfGenerator.addImages(params['fileId'], params['settings'], stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
-        case "app.endpoints.pdf-generator.convertPdfToImages(fileIds, dpi, settings, callbackData, callbacks)":
-            return app.endpoints.pdfGenerator.convertPdfToImages(params['fileIds'], params['dpi'], params[' settings'], stepConfig.inputs.callbackData, stepConfig.inputs.callbacks);
-        default:
-            return null;
-    }
+	switch (inputs.action) {
+		case "app.endpoints.pdf-generator.generatePdf(template, data, settings, callbackData, callbacks)":
+			return app.endpoints.pdfGenerator.generatePdf(inputs.params['template'], inputs.params['data'], inputs.params['settings'], inputs.callbackData, inputs.callbacks);
+		case "app.endpoints.pdf-generator.mergeDocuments(documents, callbackData, callbacks)":
+			return app.endpoints.pdfGenerator.mergeDocuments(inputs.params['documents'], inputs.callbackData, inputs.callbacks);
+		case "app.endpoints.pdf-generator.splitDocument(fileId, interval, callbackData, callbacks)":
+			return app.endpoints.pdfGenerator.splitDocument(inputs.params['fileId'], inputs.params['interval'], inputs.callbackData, inputs.callbacks);
+		case "app.endpoints.pdf-generator.replaceHeaderAndFooter(fileId, settings, callbackData, callbacks)":
+			return app.endpoints.pdfGenerator.replaceHeaderAndFooter(inputs.params['fileId'], inputs.params['settings'], inputs.callbackData, inputs.callbacks);
+		case "app.endpoints.pdf-generator.fillForm(fileId, settings, callbackData, callbacks)":
+			return app.endpoints.pdfGenerator.fillForm(inputs.params['fileId'], inputs.params['settings'], inputs.callbackData, inputs.callbacks);
+		case "app.endpoints.pdf-generator.fillFormSync(fileId, settings, callbackData, callbacks)":
+			return app.endpoints.pdfGenerator.fillFormSync(inputs.params['fileId'], inputs.params['settings'], inputs.callbackData, inputs.callbacks);
+		case "app.endpoints.pdf-generator.replaceImages(fileId, settings, callbackData, callbacks)":
+			return app.endpoints.pdfGenerator.replaceImages(inputs.params['fileId'], inputs.params['settings'], inputs.callbackData, inputs.callbacks);
+		case "app.endpoints.pdf-generator.addImages(fileId, settings, callbackData, callbacks)":
+			return app.endpoints.pdfGenerator.addImages(inputs.params['fileId'], inputs.params['settings'], inputs.callbackData, inputs.callbacks);
+		case "app.endpoints.pdf-generator.convertPdfToImages(fileIds, dpi, settings, callbackData, callbacks)":
+			return app.endpoints.pdfGenerator.convertPdfToImages(inputs.params['fileIds'], inputs.params['dpi'], inputs.params['settings'], inputs.callbackData, inputs.callbacks);
+	}
 
+	return null;
 };
 
 var parse = function (url, pathVariables){
