@@ -100,37 +100,15 @@ Generic flow step for full use of the entire endpoint and its services.
     </thead>
     <tbody>
     <tr>
-        <td>URL</td>
+        <td>Action</td>
         <td>choice</td>
         <td>yes</td>
         <td> - </td>
         <td>Always</td>
         <td>
-            This is the http method to be used against the endpoint. <br>
-            Possible values are: <br>
-            <i><strong></strong></i>
-        </td>
-    </tr>
-    <tr>
-        <td>Path</td>
-        <td>choice</td>
-        <td>yes</td>
-        <td> - </td>
-        <td>Always</td>
-        <td>
-            The url to which this endpoint will send the request. This is the exact service to which the http request will be made. <br>
+            The action or funtion to which this service will process. <br>
             Possible values are: <br>
             <i><strong>/generatePdf/{template}/{data}/{settings}<br>/mergeDocuments/{documents}<br>/splitDocument/{fileId}/{interval}<br>/replaceHeaderAndFooter/{fileId}/{settings}<br>/fillForm/{fileId}/{settings}<br>/fillFormSync/{fileId}/{settings}<br>/replaceImages/{fileId}/{settings}<br>/addImages/{fileId}/{settings}<br>/convertPdfToImages/{fileIds}/{dpi}/{settings}<br></strong></i>
-        </td>
-    </tr>
-    <tr>
-        <td>Headers</td>
-        <td>text</td>
-        <td>no</td>
-        <td> - </td>
-        <td>Always</td>
-        <td>
-            Used when you want to have a custom http header for the query.
         </td>
     </tr>
     <tr>
@@ -258,5 +236,107 @@ Generic flow step for full use of the entire endpoint and its services.
 
 For more information about how shortcuts or flow steps works, and how they are generated, take a look at the [slingr-helpgen tool](https://github.com/slingr-stack/slingr-helpgen).
 
-## Additional Helpers
-*MANUALLY ADD THE DOCUMENTATION OF THESE HELPERS HERE...*
+## Additional Flow Step
+
+
+<details>
+    <summary>Click here to see the Customs Flow Steps</summary>
+
+<br>
+
+
+
+### Generate PDF Flow Step
+
+The Generate PDF Flow Step will allow us to simply create a pdf with the minimum fields and configuration needed, useful for not having to configure the entire Generic Flow Step just to generate a pdf.
+
+<h3>Inputs</h3>
+
+<table>
+    <thead>
+    <tr>
+        <th>Label</th>
+        <th>Type</th>
+        <th>Required</th>
+        <th>Default</th>
+        <th>Visility</th>
+        <th>Description</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>Template</td>
+        <td> text </td>
+        <td>yes</td>
+        <td> - </td>
+        <td>Always</td>
+        <td>
+            It's the html template on which the service will be based to generate your pdf.
+        </td>
+    </tr>
+    <tr>
+        <td>Data</td>
+        <td> json </td>
+        <td>yes</td>
+        <td> - </td>
+        <td>Always</td>
+        <td>
+            These are the data or variables that you can use to replace content in the HTML template.
+        </td>
+    </tr>
+    <tr>
+        <td>Settings</td>
+        <td> json </td>
+        <td>no</td>
+        <td> - </td>
+        <td>Always</td>
+        <td>
+            These are the settings to configure how the pdf will be generated, see above for more details on the settings.
+        </td>
+    </tr>
+    <tr>
+        <td>Callback data</td>
+        <td>textarea</td>
+        <td>no</td>
+        <td> - </td>
+        <td> Allways </td>
+        <td>
+            This is an object you can send that you will get back when the function is processed.
+        </td>
+    </tr>
+    <tr>
+        <td>Callbacks</td>
+        <td>Script</td>
+        <td>no</td>
+        <td> - </td>
+        <td> Allways </td>
+        <td>
+            This is a map where you can listen for different function
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<h3>Outputs</h3>
+
+<table>
+    <thead>
+    <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>response</td>
+        <td>object</td>
+        <td>
+            Object resulting from the response to the endpoint call.
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+
+</details>

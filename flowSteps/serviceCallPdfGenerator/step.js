@@ -18,7 +18,7 @@
  * @param {object} stepConfig.context {object} context
  * @param {object} stepConfig.output {object} output
  */
-step.apiCallPdfGenerator = function (stepConfig) {
+step.serviceCallPdfGenerator = function (stepConfig) {
 
 	var inputs = {
 		headers: stepConfig.inputs.headers || [],
