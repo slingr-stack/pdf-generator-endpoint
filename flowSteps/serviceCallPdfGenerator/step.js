@@ -1,7 +1,7 @@
 /**
  * This flow step will send generic request.
  *
- * @param {object} stepConfig.inputs
+ * @param {object} inputs
  * {text} method, This is used to config method.
  * {text} url, This is used to config external URL.
  * {Array[string]} pathVariables, This is used to config path variables.
@@ -16,29 +16,27 @@
  * {number} connectionTimeout, Read timeout interval, in milliseconds.
  * {number} readTimeout, Connect timeout interval, in milliseconds.
  * @param {object} stepConfig.context {object} context
- * @param {object} stepConfig.output {object} output
  */
-step.serviceCallPdfGenerator = function (stepConfig) {
-
+step.serviceCallPdfGenerator = function (inputs) {
 	var inputs = {
-		headers: stepConfig.inputs.headers || [],
-		params: stepConfig.inputs.params || [],
-		body: stepConfig.inputs.body || {},
-		callbackData: stepConfig.inputs.callbackData || "",
-		callbacks: stepConfig.inputs.callbacks || "",
-		followRedirects: stepConfig.inputs.followRedirects || false,
-		download: stepConfig.inputs.download || false,
-		fileName: stepConfig.inputs.fileName || "",
-		fullResponse: stepConfig.inputs.fullResponse || false,
-		connectionTimeout: stepConfig.inputs.connectionTimeout || 5000,
-		readTimeout: stepConfig.inputs.readTimeout || 60000,
-		events: stepConfig.inputs.events || "",
-		url: stepConfig.inputs.url || {
+		headers: inputs.headers || [],
+		params: inputs.params || [],
+		body: inputs.body || {},
+		callbackData: inputs.callbackData || "",
+		callbacks: inputs.callbacks || "",
+		followRedirects: inputs.followRedirects || false,
+		download: inputs.download || false,
+		fileName: inputs.fileName || "",
+		fullResponse: inputs.fullResponse || false,
+		connectionTimeout: inputs.connectionTimeout || 5000,
+		readTimeout: inputs.readTimeout || 60000,
+		events: inputs.events || "",
+		url: inputs.url || {
 			urlValue: "",
 			paramsValue: [],
 			method: ""
 		},
-		action: stepConfig.inputs.action || ""
+		action: inputs.action || ""
 	};
 
 	inputs.headers = isObject(inputs.headers) ? inputs.headers : stringToObject(inputs.headers);
