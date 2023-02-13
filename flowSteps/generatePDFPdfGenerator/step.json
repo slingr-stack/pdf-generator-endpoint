@@ -23,28 +23,6 @@
       "name": "settings",
       "description": "Settings to be used to convert the template to PDF",
       "type": "json"
-    },
-    {
-      "label": "Callback Data",
-      "name": "callbackData",
-      "type": "text",
-      "description": "This is an object you can send that you will get back when the function is processed",
-      "visibility": "config.events",
-      "options": {
-        "representation": "textArea",
-        "allowContextSelector": "true"
-      }
-    },
-    {
-      "label": "Callbacks",
-      "name": "callbacks",
-      "type": "script",
-      "description": "This is a map where you can listener for different function",
-      "visibility": "config.events",
-      "options": {
-        "allowContextSelector": "false",
-        "parameters": ["event","callbackData"]
-      }
     }
   ],
   "outputs": [
