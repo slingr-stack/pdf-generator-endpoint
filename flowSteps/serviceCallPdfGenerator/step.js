@@ -15,74 +15,63 @@
  * {boolean} fullResponse, This is used to config full response.
  * {number} connectionTimeout, Read timeout interval, in milliseconds.
  * {number} readTimeout, Connect timeout interval, in milliseconds.
- * @param {object} stepConfig.context {object} context
  */
 step.serviceCallPdfGenerator = function (inputs) {
-	var inputs = {
+
+	var inputsLogic = {
 		headers: inputs.headers || [],
 		params: inputs.params || [],
 		body: inputs.body || {},
-		callbackData: inputs.callbackData || "",
-		callbacks: inputs.callbacks || "",
-		followRedirects: inputs.followRedirects || false,
 		download: inputs.download || false,
 		fileName: inputs.fileName || "",
 		fullResponse: inputs.fullResponse || false,
 		connectionTimeout: inputs.connectionTimeout || 5000,
 		readTimeout: inputs.readTimeout || 60000,
-		events: inputs.events || "",
-		url: inputs.url || {
-			urlValue: "",
-			paramsValue: [],
-			method: ""
+		url: {
+			urlValue: inputs.url.urlValue ? inputs.url.urlValue.split(" ")[1] : "",
+			paramsValue: inputs.url.paramsValue || []
 		},
-		action: inputs.action || ""
+		method: inputs.url.urlValue ? inputs.url.urlValue.split(" ")[0] : ""
 	};
 
-	inputs.headers = isObject(inputs.headers) ? inputs.headers : stringToObject(inputs.headers);
-	inputs.params = isObject(inputs.params) ? inputs.params : stringToObject(inputs.params);
-	inputs.body = isObject(inputs.body) ? inputs.body : JSON.parse(inputs.body);
+	inputsLogic.headers = isObject(inputsLogic.headers) ? inputsLogic.headers : stringToObject(inputsLogic.headers);
+	inputsLogic.params = isObject(inputsLogic.params) ? inputsLogic.params : stringToObject(inputsLogic.params);
+	inputsLogic.body = isObject(inputsLogic.body) ? inputsLogic.body : JSON.parse(inputsLogic.body);
 
-	inputs.callbacks = inputs.callbacks ?
-		eval("inputs.callbacks = {" + inputs.events + " : function(event, callbackData) {" + inputs.callbacks + "}}") :
-		inputs.callbacks;
-
-	inputs.callbackData = inputs.callbackData ? {record: inputs.callbackData} : inputs.callbackData;
 
 	var options = {
-		path: parse(inputs.url.urlValue, inputs.url.paramsValue),
-		params: inputs.params,
-		headers: inputs.headers,
-		body: inputs.body,
-		followRedirects : inputs.followRedirects,
-		forceDownload : inputs.events === "fileDownloaded" ? true : inputs.download,
-		downloadSync : inputs.events === "fileDownloaded" ? false : inputs.download,
-		fileName: inputs.fileName,
-		fullResponse : inputs.fullResponse,
-		connectionTimeout: inputs.connectionTimeout,
-		readTimeout: inputs.readTimeout,
-		defaultCallback: !!inputs.events
-	};
+		path: parse(inputsLogic.url.urlValue, inputsLogic.url.paramsValue),
+		params: inputsLogic.params,
+		headers: inputsLogic.headers,
+		body: inputsLogic.body,
+		followRedirects : inputsLogic.followRedirects,
+		forceDownload :inputsLogic.download,
+		downloadSync : false,
+		fileName: inputsLogic.fileName,
+		fullResponse : inputsLogic.fullResponse,
+		connectionTimeout: inputsLogic.connectionTimeout,
+		readTimeout: inputsLogic.readTimeout
+	}
 
-	switch (inputs.url.method.toLowerCase()) {
+	switch (inputs.method.toLowerCase()) {
 		case 'get':
-			return endpoint._get(options, inputs.callbackData, inputs.callbacks);
+			return endpoint._get(options);
 		case 'post':
-			return endpoint._post(options, inputs.callbackData, inputs.callbacks);
+			return endpoint._post(options);
 		case 'delete':
-			return endpoint._delete(options, inputs.callbackData, inputs.callbacks);
+			return endpoint._delete(options);
 		case 'put':
-			return endpoint._put(options, inputs.callbackData, inputs.callbacks);
+			return endpoint._put(options);
 		case 'connect':
-			return endpoint._connect(options, inputs.callbackData, inputs.callbacks);
+			return endpoint._connect(options);
 		case 'head':
-			return endpoint._head(options, inputs.callbackData, inputs.callbacks);
+			return endpoint._head(options);
 		case 'options':
-			return endpoint._options(options, inputs.callbackData, inputs.callbacks);
+			return endpoint._options(options);
 		case 'patch':
-			return endpoint._patch(options, inputs.callbackData, inputs.callbacks);
+			return endpoint._patch(options);
 		case 'trace':
-			return endpoint._trace(options, inputs.callbackData, inputs.callbacks);
+			return endpoint._trace(options);
 	}
 
 	switch (inputs.action) {

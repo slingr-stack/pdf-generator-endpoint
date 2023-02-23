@@ -2,7 +2,7 @@
 
 The Javascript API of the pdf-generator endpoint has three pieces:
 
-- **HTTP requests**: These allows to make regular HTTP requests.
+- **HTTP requests**: These allow to make regular HTTP requests.
 - **Shortcuts**: These are helpers to make HTTP request to the API in a more convenient way.
 - **Additional Helpers**: These helpers provide additional features that facilitate or improves the endpoint usage in SLINGR.
 
@@ -94,7 +94,7 @@ Generic flow step for full use of the entire endpoint and its services.
         <th>Type</th>
         <th>Required</th>
         <th>Default</th>
-        <th>Visility</th>
+        <th>Visibility</th>
         <th>Description</th>
     </tr>
     </thead>
@@ -250,7 +250,7 @@ For more information about how shortcuts or flow steps works, and how they are g
 
 The Generate PDF Flow Step will allow us to simply create a pdf with the minimum fields and configuration needed, useful for not having to configure the entire Generic Flow Step just to generate a pdf.
 
-<h3>Inputs</h3>
+*MANUALLY ADD THE DOCUMENTATION OF THESE FLOW STEPS HERE...*
 
 <table>
     <thead>
@@ -340,3 +340,6 @@ The Generate PDF Flow Step will allow us to simply create a pdf with the minimum
 
 
 </details>
+
+## Additional Helpers
+*MANUALLY ADD THE DOCUMENTATION OF THESE HELPERS HERE...*

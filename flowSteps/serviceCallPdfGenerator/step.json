@@ -2,7 +2,7 @@
   "label": "Service call to pdf-generator",
   "name": "serviceCallPdfGenerator",
   "category": "integrations",
-  "description": "This flow step will send generic request",
+  "description": "This flow step will send generic request to pdf-generator",
   "inputs": [
     {
       "label": "Action",
@@ -50,21 +50,10 @@
       }
     },
     {
-      "label": "Params",
+      "label": "Query Params",
       "name": "params",
-      "description": "The params have the 'key=value' form, per example: key=ABC123",
+      "description": "Parameters attached to the end of a url in a key value format. (e.g. key=ABC123)",
       "type": "keyValue"
-    },
-    {
-      "label": "Body",
-      "name": "body",
-      "type": "json",
-      "required": "['post', 'put', 'patch'].includes(config.method)",
-      "visibility": "['post', 'put', 'patch'].includes(config.method)",
-      "description": "This is used to set body request",
-      "options": {
-        "allowContextSelector": "false"
-      }
     }
   ],
   "outputs": [

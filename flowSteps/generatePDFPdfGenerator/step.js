@@ -9,17 +9,11 @@
  * {text} callbacks, This is used to send callbacks.
  */
 step.generatePDFPdfGenerator = function (inputs) {
-	var inputs = {
+	var inputsLogic = {
 		template: inputs.template,
 		data: inputs.data,
-		settings: inputs.settings,
-		callbackData: inputs.callbackData || "",
-		callbacks: inputs.callbacks || "",
+		settings: inputs.settings
 	};
-	inputs.callbacks = inputs.callbacks ?
-		eval("inputs.callbacks = {" + inputs.events + " : function(event, callbackData) {" + inputs.callbacks + "}}") :
-		inputs.callbacks;
 
-	inputs.callbackData = inputs.callbackData ? {record: inputs.callbackData} : inputs.callbackData;
-	return app.endpoints.pdfGenerator.generatePdf(inputs.template, inputs.data, inputs.settings, inputs.callbackData, inputs.callbacks);
+	return app.endpoints.pdfGenerator.generatePdf(inputsLogic.template, inputsLogic.data, inputsLogic.settings);
 };
