@@ -87,7 +87,7 @@ public class AddImagesWorker extends PdfImageWorker {
                                 float x = 0;
                                 float y = pageHeight - (pdImage.getHeight() * scale);
                                 // create a new content stream and draw the image
-                                contentStream.drawImage(pdImage, x, y, pdImage.getWidth() * scale, -pdImage.getHeight() * scale);
+                                contentStream.drawImage(pdImage, x, y, pdImage.getWidth() * scale, pdImage.getHeight() * scale);
                             } else {
                                 int x = image.contains("x") ? image.integer("x") : 20;
                                 int y = image.contains("y") ? image.integer("y") : 20;
