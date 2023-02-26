@@ -465,6 +465,9 @@ It is necessary send an array with images like:
 
 **height** the height size for the image. Default 100.
 
+**fullPage** if set to `true`, the params `x`, `y`, `width`, and `height` will be discarded and the
+image will take the whole page.
+
 ```javascript
 var fileId = record.field('myPdf').val().id;
 var settings = {

@@ -164,6 +164,8 @@ endpoint.options = function(url, httpOptions, callbackData, callbacks) {
     return endpoint._options(options, callbackData, callbacks);
 };
 
+endpoint.utils = {};
+
 endpoint.utils.parseTimestamp = function(dateString) {
     if (!dateString) {
         return null;
