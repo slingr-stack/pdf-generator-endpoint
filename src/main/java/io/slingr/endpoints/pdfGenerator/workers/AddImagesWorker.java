@@ -12,6 +12,7 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import org.apache.pdfbox.util.Matrix;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,6 +87,9 @@ public class AddImagesWorker extends PdfImageWorker {
                                 // calculate the position of the image on the top left corner of the page
                                 float x = 0;
                                 float y = pageHeight - (pdImage.getHeight() * scale);
+                                // transformation to flipped the image vertically so it looks good
+                                Matrix mt = new Matrix(1f, 0f, 0f, -1f, page.getCropBox().getLowerLeftX(), page.getCropBox().getUpperRightY());
+                                contentStream.transform(mt);
                                 // create a new content stream and draw the image
                                 contentStream.drawImage(pdImage, x, y, pdImage.getWidth() * scale, pdImage.getHeight() * scale);
                             } else {
