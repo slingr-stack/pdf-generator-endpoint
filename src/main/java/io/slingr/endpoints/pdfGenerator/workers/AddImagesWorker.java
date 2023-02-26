@@ -86,7 +86,7 @@ public class AddImagesWorker extends PdfImageWorker {
                                 // calculate the position of the image on the top left corner of the page
                                 float x = 0;
                                 float y = pageHeight - (pdImage.getHeight() * scale);
-                                // flip the y-coordinate to make the image appear correctly
+                                // flip the y-coordinate to make the image appear correctly; not sure why this is happening
                                 y = pageHeight - y;
                                 // create a new content stream and draw the image
                                 contentStream.drawImage(pdImage, x, y, pdImage.getWidth() * scale, pdImage.getHeight() * scale);
