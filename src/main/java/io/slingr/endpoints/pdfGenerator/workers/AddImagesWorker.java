@@ -85,7 +85,7 @@ public class AddImagesWorker extends PdfImageWorker {
                                 float scale = Math.max(scaleX, scaleY);
                                 // calculate the position of the image on the top left corner of the page
                                 float x = 0;
-                                float y = pageHeight - (pdImage.getHeight() * scale);
+                                float y = 0;
                                 // create a new content stream and draw the image
                                 contentStream.drawImage(pdImage, x, y, pdImage.getWidth() * scale, pdImage.getHeight() * scale);
                             } else {
