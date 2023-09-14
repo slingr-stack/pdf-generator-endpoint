@@ -47,7 +47,12 @@ public class PdfGenerator extends Endpoint {
     @EndpointProperty
     private String maxThreadPool;
 
+    @EndpointProperty
+    private String maxSleep;
+
     private final int MAX_THREADS_POOL = 3;
+
+    private final int SLEEP = 3000;
 
     protected ExecutorService executorService;
 
@@ -56,6 +61,12 @@ public class PdfGenerator extends Endpoint {
         int maxTreads = MAX_THREADS_POOL;
         try {
             maxTreads = Integer.valueOf(maxThreadPool);
+        } catch (Exception ex) {
+        }
+
+        int maxSleepInt = SLEEP;
+        try {
+            maxSleepInt = Integer.valueOf(maxSleep);
         } catch (Exception ex) {
         }
 
@@ -73,11 +84,13 @@ public class PdfGenerator extends Endpoint {
         }
 
 
+        final int finalMaxSleepInt = maxSleepInt;
+
         Executors.newSingleThreadScheduledExecutor().execute(() -> {
             while (true) {
                 generateAutoPdf();
                 try {
-                    Thread.sleep(3000);
+                    Thread.sleep(finalMaxSleepInt);
                 } catch (InterruptedException e) {
                     logger.info("Generate pdf thread was interrupted.");
                 }

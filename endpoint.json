@@ -140,6 +140,16 @@
             "typeOptions": {
                 "validation": "number"
             }
+        },
+        {
+            "label": "Max sleep",
+            "name": "maxSleep",
+            "defaultValue": "3000",
+            "type": "text",
+            "required": true,
+            "typeOptions": {
+                "validation": "number"
+            }
         }
     ]
 }
