@@ -122,12 +122,10 @@ public class PdfGenerator extends Endpoint {
             sw = new StringWriter();
             tpl.process(jData.toMap(), sw);
             String swString = sw.toString();
-            if (downloadImages){
-                Map<String,String> urlImgs = getListImgUrlToHtml(swString);
+            if (downloadImages) {
+                Map<String, String> urlImgs = extractImageUrlsFromHtml(swString);
                 for (Map.Entry<String, String> entry : urlImgs.entrySet()) {
-                    String oldUrl = entry.getKey();
-                    String newUrl = entry.getValue();
-                    swString = swString.replace(oldUrl, newUrl);
+                    swString = swString.replace(entry.getKey(), entry.getValue());
                 }
             }
             data.set("tpl", swString);
@@ -153,24 +151,36 @@ public class PdfGenerator extends Endpoint {
         return resp;
     }
 
-    public String downloadImageToTmp(String url) {
-        RestClient restClient = RestClient.builder(url);
-        DownloadedFile file = restClient.download();
-        File newFile = FilesUtils.copyInputStreamToTemporaryFile("", file.getFile());
-        return newFile.getPath();
-    }
-
-
-    public Map<String,String> getListImgUrlToHtml(String html) {
-        Map<String,String> urls = new LinkedHashMap<>();
+    /**
+     * Extracts image URLs from the provided HTML content.
+     *
+     * @param html The HTML content from which to extract image URLs.
+     * @return A map containing the original image URLs as keys and their local paths as values.
+     */
+    private Map<String, String> extractImageUrlsFromHtml(String html) {
+        Map<String, String> imageUrls = new LinkedHashMap<>();
         Document document = Jsoup.parse(html);
         Elements imgElements = document.select("img");
         for (Element imgElement : imgElements) {
             String url = imgElement.attr("src");
-            urls.put(url, "file:///" + downloadImageToTmp(url));
+            imageUrls.put(url, "file:///" + downloadImageToTmp(url));
         }
-        return urls;
+        return imageUrls;
     }
+
+    /**
+     * Downloads an image from the provided URL to a temporary location.
+     *
+     * @param imageUrl The URL of the image to download.
+     * @return The local path to the downloaded image.
+     */
+    private String downloadImageToTmp(String imageUrl) {
+        RestClient restClient = RestClient.builder(imageUrl);
+        DownloadedFile file = restClient.download();
+        File localFile = FilesUtils.copyInputStreamToTemporaryFile("", file.getFile());
+        return localFile.getPath();
+    }
+
 
 
     @EndpointFunction(name = "_fillForm")
