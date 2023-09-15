@@ -146,10 +146,10 @@
             "label": "Download Images",
             "type": "buttonsGroup",
             "required": true,
-            "description": "Set to true if your final PDF does not display all images correctly",
+            "description": "Set to yes, if your final PDF does not display all images correctly",
             "defaultValue": "true",
             "typeOptions": {
-                "allowCustom": true,
+                "allowCustom": false,
                 "possibleValues":[
                     {
                         "label":"Yes",
