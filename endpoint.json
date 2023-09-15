@@ -142,12 +142,25 @@
             }
         },
         {
-            "label": "Download Images",
             "name": "downloadImages",
-            "defaultValue": false,
+            "label": "Download Images",
+            "type": "buttonsGroup",
+            "required": true,
             "description": "Set to true if your final PDF does not display all images correctly",
-            "type": "boolean",
-            "required": true
+            "defaultValue": "true",
+            "typeOptions": {
+                "allowCustom": true,
+                "possibleValues":[
+                    {
+                        "label":"Yes",
+                        "name":"true"
+                    },
+                    {
+                        "label":"No",
+                        "name":"false"
+                    }
+                ]
+            }
         }
     ]
 }
