@@ -27,7 +27,7 @@ public class PdfEngine {
     private String footerTmpFile;
 
 
-    public PdfEngine(String tpl, Json settings) throws IOException, TemplateException {
+    public PdfEngine(String tpl, Json settings, boolean downloadImages) throws IOException, TemplateException {
 
         template = tpl;
         commandParams = new ArrayList();
@@ -46,6 +46,10 @@ public class PdfEngine {
         }
         commandParams.add("--page-size");
         commandParams.add(pageSize);
+
+        if (downloadImages){
+            commandParams.add("--enable-local-file-access");
+        }
 
         String orientation = settings.string("orientation");
         if (StringUtils.isNotBlank(orientation) && orientation.toLowerCase().equals("landscape")) {

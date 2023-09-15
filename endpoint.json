@@ -142,14 +142,12 @@
             }
         },
         {
-            "label": "Max sleep",
-            "name": "maxSleep",
-            "defaultValue": "3000",
-            "type": "text",
-            "required": true,
-            "typeOptions": {
-                "validation": "number"
-            }
+            "label": "Download Images",
+            "name": "downloadImages",
+            "defaultValue": false,
+            "description": "Set to true if your final PDF does not display all images correctly",
+            "type": "boolean",
+            "required": true
         }
     ]
 }

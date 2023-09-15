@@ -13,12 +13,18 @@ import io.slingr.endpoints.framework.annotations.SlingrEndpoint;
 import io.slingr.endpoints.pdfGenerator.workers.*;
 import io.slingr.endpoints.services.AppLogs;
 import io.slingr.endpoints.services.rest.DownloadedFile;
+import io.slingr.endpoints.services.rest.RestClient;
+import io.slingr.endpoints.utils.FilesUtils;
 import io.slingr.endpoints.utils.Json;
 import io.slingr.endpoints.ws.exchange.FunctionRequest;
 import org.apache.commons.lang.StringUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +32,9 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
@@ -46,6 +54,9 @@ public class PdfGenerator extends Endpoint {
 
     @EndpointProperty
     private String maxThreadPool;
+
+    @EndpointProperty
+    private boolean downloadImages;
 
     private final int MAX_THREADS_POOL = 3;
 
@@ -101,6 +112,7 @@ public class PdfGenerator extends Endpoint {
             jData = Json.map();
         }
 
+
         Configuration cfg = new Configuration();
         Template tpl;
         StringWriter sw = null;
@@ -109,7 +121,16 @@ public class PdfGenerator extends Endpoint {
             tpl.setAutoFlush(true);
             sw = new StringWriter();
             tpl.process(jData.toMap(), sw);
-            data.set("tpl", sw.toString());
+            String swString = sw.toString();
+            if (downloadImages){
+                Map<String,String> urlImgs = getListImgUrlToHtml(swString);
+                for (Map.Entry<String, String> entry : urlImgs.entrySet()) {
+                    String oldUrl = entry.getKey();
+                    String newUrl = entry.getValue();
+                    swString = swString.replace(oldUrl, newUrl);
+                }
+            }
+            data.set("tpl", swString);
             QueuePdf.getStreamInstance().add(request);
             resp.set("status", "ok");
         } catch (IOException e) {
@@ -131,6 +152,26 @@ public class PdfGenerator extends Endpoint {
 
         return resp;
     }
+
+    public String downloadImageToTmp(String url) {
+        RestClient restClient = RestClient.builder(url);
+        DownloadedFile file = restClient.download();
+        File newFile = FilesUtils.copyInputStreamToTemporaryFile("", file.getFile());
+        return newFile.getPath();
+    }
+
+
+    public Map<String,String> getListImgUrlToHtml(String html) {
+        Map<String,String> urls = new LinkedHashMap<>();
+        Document document = Jsoup.parse(html);
+        Elements imgElements = document.select("img");
+        for (Element imgElement : imgElements) {
+            String url = imgElement.attr("src");
+            urls.put(url, "file:///" + downloadImageToTmp(url));
+        }
+        return urls;
+    }
+
 
     @EndpointFunction(name = "_fillForm")
     public Json fillForm(FunctionRequest request) {
@@ -172,7 +213,7 @@ public class PdfGenerator extends Endpoint {
             Json data = req.getJsonParams();
             String template = data.string("tpl");
             Json settings = data.json("settings");
-            PdfEngine pdfEngine = new PdfEngine(template, settings);
+            PdfEngine pdfEngine = new PdfEngine(template, settings, downloadImages);
             is = pdfEngine.getPDF();
             if (is != null) {
                 try {
