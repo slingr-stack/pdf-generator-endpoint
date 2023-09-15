@@ -147,7 +147,7 @@
             "type": "buttonsGroup",
             "required": true,
             "description": "Set to yes, if your final PDF does not display all images correctly",
-            "defaultValue": "true",
+            "defaultValue": "false",
             "typeOptions": {
                 "allowCustom": false,
                 "possibleValues":[
