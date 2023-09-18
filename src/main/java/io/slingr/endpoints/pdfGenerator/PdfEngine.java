@@ -26,6 +26,8 @@ public class PdfEngine {
     private String headerTmpFile;
     private String footerTmpFile;
 
+    private final String TMP_PATH = "/tmp";
+
 
     public PdfEngine(String tpl, Json settings, boolean downloadImages) throws IOException, TemplateException {
 
@@ -151,6 +153,25 @@ public class PdfEngine {
         if (footerTmpFile != null) {
             (new File(footerTmpFile)).delete();
         }*/
+        File tmpFolder = new File(TMP_PATH);
+        if (tmpFolder.exists() && tmpFolder.isDirectory()) {
+            FilenameFilter filter = new FilenameFilter() {
+                @Override
+                public boolean accept(File dir, String name) {
+                    return name.endsWith(".tmp");
+                }
+            };
+            File[] tmpFiles = tmpFolder.listFiles(filter);
+            if (tmpFiles != null) {
+                for (File tmpFile : tmpFiles) {
+                    tmpFile.delete();
+                    logger.info("Deleted: " + tmpFile.getName());
+                }
+            }
+            logger.info(".tmp files deleted from the /tmp folder.");
+        } else {
+            logger.info("/tmp folder does not exist or is not a directory.");
+        }
     }
 
 }
