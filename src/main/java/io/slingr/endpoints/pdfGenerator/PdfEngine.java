@@ -27,7 +27,7 @@ public class PdfEngine {
     private String footerTmpFile;
 
     private final String TMP_PATH = "/tmp";
-
+    public static boolean downloadImages;
 
     public PdfEngine(String tpl, Json settings, boolean downloadImages) throws IOException, TemplateException {
 
@@ -106,6 +106,13 @@ public class PdfEngine {
                 tpl.process(data.toMap(), sw);
 
                 template = sw.toString();
+                if (downloadImages) {
+                    Map<String, String> urlImgs = PdfGenerator.extractImageUrlsFromHtml(template);
+                    for (Map.Entry<String, String> entry : urlImgs.entrySet()) {
+                        template = template.replace(entry.getKey(), entry.getValue());
+                    }
+                    logger.info(String.format("Template [%s]", template));
+                }
 
                 File temp = File.createTempFile("pdf-header-" + Strings.randomUUIDString(), ".html");
                 FileUtils.writeStringToFile(temp, template, "UTF-8");

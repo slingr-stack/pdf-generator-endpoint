@@ -34,6 +34,7 @@ public class PdfHeaderFooterHandler {
 
     private Map<String, String> tempFiles = new HashMap<>();
 
+    public static boolean downloadImages;
 
     public String setHeaderWithImage(InputStream report, String headerTemplate, float hHeight, float hWidth, String footerTemplate, float fHeight, float fWidth) {
 
@@ -262,8 +263,15 @@ public class PdfHeaderFooterHandler {
                 if (data != null) {
                     tpl.process(data.toMap(), sw);
                 }
-
-                return sw.toString();
+                String swString = sw.toString();
+                if (downloadImages) {
+                    Map<String, String> urlImgs = PdfGenerator.extractImageUrlsFromHtml(swString);
+                    for (Map.Entry<String, String> entry : urlImgs.entrySet()) {
+                        swString = swString.replace(entry.getKey(), entry.getValue());
+                    }
+                    logger.info(String.format("Template [%s]", swString));
+                }
+                return swString;
 
             }
         } catch (IOException | TemplateException ex) {

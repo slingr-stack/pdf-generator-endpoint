@@ -31,10 +31,8 @@ import org.slf4j.LoggerFactory;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.net.URLConnection;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
@@ -69,6 +67,9 @@ public class PdfGenerator extends Endpoint {
             maxTreads = Integer.valueOf(maxThreadPool);
         } catch (Exception ex) {
         }
+
+        PdfHeaderFooterHandler.downloadImages = this.downloadImages;
+        PdfEngine.downloadImages = this.downloadImages;
 
         this.executorService = Executors.newFixedThreadPool(maxTreads);
 
@@ -157,31 +158,53 @@ public class PdfGenerator extends Endpoint {
      * @param html The HTML content from which to extract image URLs.
      * @return A map containing the original image URLs as keys and their local paths as values.
      */
-    private Map<String, String> extractImageUrlsFromHtml(String html) {
+    public static Map<String, String> extractImageUrlsFromHtml(String html) {
         Map<String, String> imageUrls = new LinkedHashMap<>();
         Document document = Jsoup.parse(html);
         Elements imgElements = document.select("img");
         for (Element imgElement : imgElements) {
             String url = imgElement.attr("src");
-            imageUrls.put(url, "file:///" + downloadImageToTmp(url));
+            String base64Image = convertImageToBase64(url);
+            String imageType = URLConnection.guessContentTypeFromName(downloadImageToTmp(url).getName());
+            String dataUrl = "data:" + imageType + ";base64, " + base64Image;
+            //imageUrls.put(url, "file:///" + downloadImageToTmp(url));
+            imageUrls.put(url, dataUrl);
         }
         return imageUrls;
+    }
+
+    private static String convertImageToBase64(String imageUrl) {
+        RestClient restClient = RestClient.builder(imageUrl);
+        DownloadedFile file = restClient.download();
+        byte[] fileContent;
+        try {
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            int nRead;
+            byte[] data = new byte[1024];
+
+            while ((nRead = file.getFile().read(data, 0, data.length)) != -1) {
+                buffer.write(data, 0, nRead);
+            }
+
+            buffer.flush();
+            fileContent = buffer.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return Base64.getEncoder().encodeToString(fileContent);
     }
 
     /**
      * Downloads an image from the provided URL to a temporary location.
      *
      * @param imageUrl The URL of the image to download.
-     * @return The local path to the downloaded image.
+     * @return The local file.
      */
-    private String downloadImageToTmp(String imageUrl) {
+    private static File downloadImageToTmp(String imageUrl) {
         RestClient restClient = RestClient.builder(imageUrl);
         DownloadedFile file = restClient.download();
-        File localFile = FilesUtils.copyInputStreamToTemporaryFile("", file.getFile());
-        return localFile.getPath();
+        return FilesUtils.copyInputStreamToTemporaryFile("", file.getFile());
     }
-
-
 
     @EndpointFunction(name = "_fillForm")
     public Json fillForm(FunctionRequest request) {
